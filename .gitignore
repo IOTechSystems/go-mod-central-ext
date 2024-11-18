@@ -1,0 +1,7 @@
+*~
+*.log
+glide.lock
+.idea
+coverage.out
+*.DS_Store
+VERSION
