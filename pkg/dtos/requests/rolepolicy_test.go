@@ -69,6 +69,11 @@ func TestAddRolePolicyRequest_Validate(t *testing.T) {
 	invalidMethodAccessPolicy.HttpMethods = []string{"invalid"}
 	invalidMethodPolicy := valid
 	invalidMethodPolicy.RolePolicy.AccessPolicies = []dtos.AccessPolicy{invalidMethodAccessPolicy}
+
+	dupMethodAccessPolicy := mockAccessPolicyDTO
+	dupMethodAccessPolicy.HttpMethods = []string{"GET", "GET"}
+	dupMethodPolicy := valid
+	dupMethodPolicy.RolePolicy.AccessPolicies = []dtos.AccessPolicy{dupMethodAccessPolicy}
 	tests := []struct {
 		name        string
 		RolePolicy  AddRolePolicyRequest
@@ -80,6 +85,7 @@ func TestAddRolePolicyRequest_Validate(t *testing.T) {
 		{"invalid AddRolePolicyRequest, invalid AccessPolicy", invalidAccessPolicy, true},
 		{"invalid AddRolePolicyRequest, empty HttpMethod", emptyMethodPolicy, true},
 		{"invalid AddRolePolicyRequest, invalid HttpMethod", invalidMethodPolicy, true},
+		{"invalid AddRolePolicyRequest, duplicate HttpMethod", dupMethodPolicy, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
