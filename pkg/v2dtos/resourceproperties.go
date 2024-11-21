@@ -3,7 +3,7 @@
 package v2dtos
 
 import (
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/v2models"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/v2models"
 )
 
 // ResourceProperties and its properties care defined in the APIv2 specification:

@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/common"
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/dtos"
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/models"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/common"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/dtos"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/models"
 	dtoCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos/common"
 
 	"github.com/stretchr/testify/require"

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/v2dtos"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/v2dtos"
 	edgexDtos "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos"
 
 	"github.com/stretchr/testify/require"

@@ -1,4 +1,4 @@
-module github.com/edgexfoundry/go-mod-central-ext/v4
+module github.com/IOTechSystems/go-mod-central-ext/v4
 
 go 1.23
 
