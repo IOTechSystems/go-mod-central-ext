@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/xrtmodels"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/xrtmodels"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"
 )
 

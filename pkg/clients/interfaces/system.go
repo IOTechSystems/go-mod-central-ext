@@ -5,7 +5,7 @@ package interfaces
 import (
 	"context"
 
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/dtos/requests"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/dtos/requests"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/dtos/common"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"
 )

@@ -12,7 +12,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/dtos/requests"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/dtos/requests"
 	edgexCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/common"
 	dtoCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos/common"
 )

@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/common"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/common"
 	edgexCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/common"
 	edgexDtos "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"

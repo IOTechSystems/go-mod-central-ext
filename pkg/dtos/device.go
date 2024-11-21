@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/common"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/common"
 	edgexDtos "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos"
 	edgexModels "github.com/edgexfoundry/go-mod-core-contracts/v4/models"
 )

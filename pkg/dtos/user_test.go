@@ -5,7 +5,7 @@ package dtos
 import (
 	"testing"
 
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/models"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/models"
 
 	"github.com/stretchr/testify/require"
 )

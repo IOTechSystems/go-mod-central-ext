@@ -5,7 +5,7 @@
 package responses
 
 import (
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/dtos"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/dtos"
 	edgexCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos/common"
 )
 

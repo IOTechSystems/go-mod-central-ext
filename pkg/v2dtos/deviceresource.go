@@ -3,7 +3,7 @@
 package v2dtos
 
 import (
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/v2models"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/v2models"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"
 )
 

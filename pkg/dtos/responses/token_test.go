@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/common"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/common"
 )
 
 func TestNewTokenResponse(t *testing.T) {

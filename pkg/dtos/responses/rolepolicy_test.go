@@ -5,8 +5,8 @@ package responses
 import (
 	"testing"
 
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/common"
-	"github.com/edgexfoundry/go-mod-central-ext/v4/pkg/dtos"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/common"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/dtos"
 
 	"github.com/stretchr/testify/require"
 )
