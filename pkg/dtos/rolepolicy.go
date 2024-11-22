@@ -9,7 +9,7 @@ import (
 
 type RolePolicy struct {
 	edgexDtos.DBTimestamp
-	Id             string         `json:"id"`
+	Id             string         `json:"id,omitempty"`
 	Role           string         `json:"role" validate:"required,edgex-dto-none-empty-string"`
 	Description    string         `json:"description,omitempty"`
 	AccessPolicies []AccessPolicy `json:"accessPolicies" validate:"gt=0,dive,required"`
@@ -17,7 +17,7 @@ type RolePolicy struct {
 
 type AccessPolicy struct {
 	Path        string   `json:"path" validate:"required,edgex-dto-none-empty-string"`
-	HttpMethods []string `json:"httpMethods" validate:"gt=0,dive,oneof=GET PUT POST PATCH DELETE,required"`
+	HttpMethods []string `json:"httpMethods" validate:"unique,gt=0,dive,oneof=GET PUT POST PATCH DELETE,required"`
 	Effect      string   `json:"effect" validate:"required,oneof=allow deny"`
 }
 
