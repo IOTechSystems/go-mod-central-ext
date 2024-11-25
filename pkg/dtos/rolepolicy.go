@@ -17,7 +17,7 @@ type RolePolicy struct {
 
 type AccessPolicy struct {
 	Path        string   `json:"path" validate:"required,edgex-dto-none-empty-string"`
-	HttpMethods []string `json:"httpMethods" validate:"unique,gt=0,dive,oneof=GET PUT POST PATCH DELETE,required"`
+	HttpMethods []string `json:"httpMethods" validate:"unique,gt=0,dive,oneof=GET HEAD POST PUT DELETE CONNECT OPTIONS TRACE PATCH,required"`
 	Effect      string   `json:"effect" validate:"required,oneof=allow deny"`
 }
 
@@ -85,4 +85,15 @@ func FromAccessPolicyModelsToDTOs(accessPolicies []models.AccessPolicy) []Access
 		dtos[i] = FromAccessPolicyModelToDTO(a)
 	}
 	return dtos
+}
+
+type AuthRoute struct {
+	Path       string `json:"path" validate:"required,edgex-dto-none-empty-string"`
+	HttpMethod string `json:"httpMethod" validate:"oneof=GET HEAD POST PUT DELETE CONNECT OPTIONS TRACE PATCH,required"`
+}
+
+// AuthRouteResult defines the content for auth route result
+type AuthRouteResult struct {
+	AuthRoute
+	AuthResult bool `json:"authResult"`
 }

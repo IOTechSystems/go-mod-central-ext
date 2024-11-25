@@ -51,3 +51,33 @@ func AddRolePolicyReqToRolePolicyModels(addRequests []AddRolePolicyRequest) (rps
 	}
 	return rps
 }
+
+// AuthRouteRequest defines the Request Content for POST AuthRoute DTO
+type AuthRouteRequest struct {
+	dtoCommon.BaseRequest `json:",inline"`
+	AuthRoute             dtos.AuthRoute `json:"authRoute"`
+}
+
+// Validate satisfies the Validator interface
+func (a *AuthRouteRequest) Validate() error {
+	err := edgexCommon.Validate(a)
+	return err
+}
+
+// UnmarshalJSON implements the Unmarshaler interface for the AuthRouteRequest type
+func (a *AuthRouteRequest) UnmarshalJSON(b []byte) error {
+	var alias struct {
+		dtoCommon.BaseRequest
+		AuthRoute dtos.AuthRoute
+	}
+	if err := json.Unmarshal(b, &alias); err != nil {
+		return errors.NewCommonEdgeX(errors.KindContractInvalid, "Failed to unmarshal request body as JSON.", err)
+	}
+
+	*a = AuthRouteRequest(alias)
+	// Validate AuthRouteRequest DTO
+	if err := a.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
