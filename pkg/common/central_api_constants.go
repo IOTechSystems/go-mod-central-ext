@@ -15,6 +15,7 @@ const (
 	Acknowledge   = "acknowledge"
 	Unacknowledge = "unacknowledge"
 	NoCallback    = "nocallback" //query string to ask core-metadata not to invoke DS callback
+	Role          = "role"
 )
 
 const (
@@ -23,4 +24,24 @@ const (
 	ApiRuleByNameRoute = ApiRuleRoute + "/" + edgexCommon.Name + "/:" + edgexCommon.Name
 
 	ApiCoreCommandsByDeviceNameRoute = edgexCommon.ApiBase + "/command/device" + "/" + edgexCommon.Name + "/:" + edgexCommon.Name
+
+	ApiRolePolicyRoute       = edgexCommon.ApiBase + "/rolepolicy"
+	ApiAllRolePolicyRoute    = ApiRolePolicyRoute + "/" + edgexCommon.All
+	ApiRolePolicyByRoleRoute = ApiRolePolicyRoute + "/" + Role + "/:" + Role
+
+	ApiUserRoute       = edgexCommon.ApiBase + "/user"
+	ApiAllUserRoute    = ApiUserRoute + "/" + edgexCommon.All
+	ApiUserByNameRoute = ApiUserRoute + "/" + edgexCommon.Name + "/:" + edgexCommon.Name
+
+	ApiLoginRoute      = edgexCommon.ApiBase + "/login"
+	ApiLogoutRoute     = edgexCommon.ApiBase + "/logout"
+	ApiAuthRoute       = edgexCommon.ApiBase + "/auth"
+	ApiAuthRoutesRoute = edgexCommon.ApiBase + "/auth-routes"
+)
+
+// constants relate to header names
+const (
+	AuthorizationHeader   = "Authorization"
+	ForwardedUriHeader    = "X-Forwarded-Uri"
+	ForwardedMethodHeader = "X-Forwarded-Method"
 )
