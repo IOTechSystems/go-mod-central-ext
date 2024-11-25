@@ -32,3 +32,16 @@ func NewMultiRolePolicyResponse(requestId string, message string, statusCode int
 		RolePolicies:               rolePolicies,
 	}
 }
+
+// AuthRouteResponse defines the Response Content for POST AuthRoute DTO
+type AuthRouteResponse struct {
+	dtoCommon.BaseResponse `json:",inline"`
+	AuthResponses          []dtos.AuthRouteResult `json:"authResponses"`
+}
+
+func NewAuthRouteResponse(requestId string, message string, statusCode int, authRouteResults []dtos.AuthRouteResult) AuthRouteResponse {
+	return AuthRouteResponse{
+		BaseResponse:  dtoCommon.NewBaseResponse(requestId, message, statusCode),
+		AuthResponses: authRouteResults,
+	}
+}

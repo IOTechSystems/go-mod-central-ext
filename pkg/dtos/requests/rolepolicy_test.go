@@ -44,6 +44,17 @@ var (
 		},
 		RolePolicy: mockRolePolicyDTO,
 	}
+	mockAuthRoute = dtos.AuthRoute{
+		Path:       "/core-metadata/*/device/name/abc",
+		HttpMethod: "DELETE",
+	}
+	testAuthRouteRequest = AuthRouteRequest{
+		BaseRequest: dtoCommon.BaseRequest{
+			RequestId:   common.ExampleUUID,
+			Versionable: dtoCommon.NewVersionable(),
+		},
+		AuthRoute: mockAuthRoute,
+	}
 )
 
 func TestAddRolePolicyRequest_Validate(t *testing.T) {
@@ -142,4 +153,69 @@ func Test_AddRolePolicyReqToRolePolicyModels(t *testing.T) {
 	}
 	resultModels := AddRolePolicyReqToRolePolicyModels(requests)
 	require.Equal(t, expectedRoleModels, resultModels, "AddRolePolicyReqToRolePolicyModels did not result in expected RolePolicy model")
+}
+
+func TestAuthRouteRequest_Validate(t *testing.T) {
+	valid := testAuthRouteRequest
+
+	emptyPath := valid
+	emptyPath.AuthRoute.Path = ""
+
+	emptyMethod := valid
+	emptyMethod.AuthRoute.HttpMethod = ""
+
+	invalidMethod := valid
+	invalidMethod.AuthRoute.HttpMethod = "invalid"
+	tests := []struct {
+		name         string
+		authRouteReq AuthRouteRequest
+		expectError  bool
+	}{
+		{"valid AuthRouteRequest", valid, false},
+		{"invalid AuthRouteRequest, empty path", emptyPath, true},
+		{"invalid AuthRouteRequest, empty HttpMethod", emptyMethod, true},
+		{"invalid AuthRouteRequest, invalid HttpMethod", invalidMethod, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.authRouteReq.Validate()
+			if tt.expectError {
+				require.Error(t, err, fmt.Sprintf("expect error but not : %s", tt.name))
+			} else {
+				require.NoError(t, err, fmt.Sprintf("unexpected error occurs : %s", tt.name))
+			}
+		})
+	}
+}
+
+func TestAuthRouteRequest_UnmarshalJSON(t *testing.T) {
+	valid := testAuthRouteRequest
+	resultTestBytes, _ := json.Marshal(testAuthRouteRequest)
+	type args struct {
+		data []byte
+	}
+
+	tests := []struct {
+		name         string
+		authRouteReq AuthRouteRequest
+		args         args
+		wantErr      bool
+	}{
+		{"unmarshal AddRolePolicyRequest with success", valid, args{resultTestBytes}, false},
+		{"unmarshal invalid AddRolePolicyRequest, empty data", AuthRouteRequest{}, args{[]byte{}}, true},
+		{"unmarshal invalid AddRolePolicyRequest, string data", AuthRouteRequest{}, args{[]byte("Invalid AddUserRequest")}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var expected = tt.authRouteReq
+			err := tt.authRouteReq.UnmarshalJSON(tt.args.data)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, expected, tt.authRouteReq, "Unmarshal did not result in expected AuthRouteRequest")
+			}
+		})
+	}
 }

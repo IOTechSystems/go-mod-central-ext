@@ -39,3 +39,31 @@ func TestNewMultiRolePolicyResponse(t *testing.T) {
 	require.Equal(t, expectedTotalCount, actual.TotalCount)
 	require.Equal(t, expectedRolePolicies, actual.RolePolicies)
 }
+
+func TestNewAuthRouteResponse(t *testing.T) {
+	mockAuthRouteResult1 := dtos.AuthRouteResult{
+		AuthRoute: dtos.AuthRoute{
+			Path:       "/core-metadata/*/device/name/abc",
+			HttpMethod: "DELETE",
+		},
+		AuthResult: false,
+	}
+	mockAuthRouteResult2 := dtos.AuthRouteResult{
+		AuthRoute: dtos.AuthRoute{
+			Path:       "/core-data/*/event",
+			HttpMethod: "GET",
+		},
+		AuthResult: true,
+	}
+	expectedResults := []dtos.AuthRouteResult{
+		mockAuthRouteResult1,
+		mockAuthRouteResult2,
+	}
+
+	actual := NewAuthRouteResponse(common.ExpectedRequestId, common.ExpectedMessage, common.ExpectedStatusCode, expectedResults)
+
+	require.Equal(t, common.ExpectedRequestId, actual.RequestId)
+	require.Equal(t, common.ExpectedStatusCode, actual.StatusCode)
+	require.Equal(t, common.ExpectedMessage, actual.Message)
+	require.Equal(t, expectedResults, actual.AuthResponses)
+}
