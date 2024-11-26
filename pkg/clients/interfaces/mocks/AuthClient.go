@@ -50,11 +50,11 @@ func (_m *AuthClient) AuthRoutes(ctx context.Context, headers map[string]string,
 }
 
 // Authenticate provides a mock function with given fields: ctx, headers
-func (_m *AuthClient) Authenticate(ctx context.Context, headers map[string]string) (errors.EdgeX, string) {
+func (_m *AuthClient) Auth(ctx context.Context, headers map[string]string) (errors.EdgeX, string) {
 	ret := _m.Called(ctx, headers)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Authenticate")
+		panic("no return value specified for Auth")
 	}
 
 	var r0 errors.EdgeX

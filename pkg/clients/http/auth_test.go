@@ -19,7 +19,7 @@ func TestAuthenticate(t *testing.T) {
 	defer ts.Close()
 
 	client := NewAuthClient(ts.URL, NewNullAuthenticationInjector())
-	err, jwt := client.Authenticate(context.Background(), map[string]string{"mock": "mockHeader"})
+	err, jwt := client.Auth(context.Background(), map[string]string{"mock": "mockHeader"})
 	require.NoError(t, err)
 	require.IsType(t, "abc", jwt)
 }

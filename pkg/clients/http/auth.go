@@ -4,8 +4,6 @@ package http
 
 import (
 	"context"
-	"net/http"
-	"strings"
 
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/clients/interfaces"
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/common"
@@ -30,19 +28,12 @@ func NewAuthClient(baseUrl string, authInjector clientsInterfaces.Authentication
 	}
 }
 
-func (ac AuthClient) Authenticate(ctx context.Context, headers map[string]string) (errors.EdgeX, string) {
-	err := utils.PostRequestWithRawDataAndHeaders(ctx, nil, ac.baseUrl, common.ApiAuthRoute, nil, nil, ac.authInjector, headers)
+func (ac AuthClient) Auth(ctx context.Context, headers map[string]string) (errors.EdgeX, string) {
+	var newJWT string
+
+	err := utils.PostRequestWithRawDataAndHeaders(ctx, &newJWT, ac.baseUrl, common.ApiAuthRoute, nil, nil, ac.authInjector, headers)
 	if err != nil {
-		if err.Code() == http.StatusForbidden {
-			// Check if the returned response contains JWT
-			hasJWT := strings.HasPrefix(err.Error(), "request failed, status code: 403, err: \"")
-			if hasJWT {
-				jwt := strings.TrimPrefix(err.Error(), "request failed, status code: 403, err: \"")
-				jwt = strings.TrimSuffix(jwt, "\"\n")
-				return errors.NewCommonEdgeXWrapper(err), jwt
-			}
-		}
-		return errors.NewCommonEdgeXWrapper(err), ""
+		return errors.NewCommonEdgeXWrapper(err), newJWT
 	}
 
 	return nil, ""
