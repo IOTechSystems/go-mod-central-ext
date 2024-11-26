@@ -30,7 +30,7 @@ func newTestServer(httpMethod string, apiRoute string, expectedResponse interfac
 
 		w.WriteHeader(http.StatusOK)
 
-		if expectedResponse == nil {
+		if _, ok := expectedResponse.(string); ok {
 			return
 		}
 

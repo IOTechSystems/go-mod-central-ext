@@ -89,19 +89,3 @@ func (uc UserClient) Login(ctx context.Context, reqs requests.LoginRequest) (res
 	}
 	return res, nil
 }
-
-func (uc UserClient) Authenticate(ctx context.Context, headers map[string]string) errors.EdgeX {
-	err := utils.PostRequestWithRawDataAndHeaders(ctx, nil, uc.baseUrl, common.ApiAuthRoute, nil, nil, uc.authInjector, headers)
-	if err != nil {
-		return errors.NewCommonEdgeXWrapper(err)
-	}
-	return nil
-}
-
-func (uc UserClient) AuthRoutes(ctx context.Context, headers map[string]string, routeReqs []requests.AuthRouteRequest) (res responses.AuthRouteResponse, err errors.EdgeX) {
-	err = utils.PostRequestWithRawDataAndHeaders(ctx, &res, uc.baseUrl, common.ApiAuthRoutesRoute, nil, routeReqs, uc.authInjector, headers)
-	if err != nil {
-		return res, errors.NewCommonEdgeXWrapper(err)
-	}
-	return res, nil
-}

@@ -73,23 +73,3 @@ func TestDeleteUserByName(t *testing.T) {
 	require.NoError(t, err)
 	require.IsType(t, dtoCommon.BaseResponse{}, res)
 }
-
-func TestAuthenticate(t *testing.T) {
-	ts := newTestServer(http.MethodPost, common.ApiAuthRoute, nil)
-	defer ts.Close()
-
-	client := NewUserClient(ts.URL, NewNullAuthenticationInjector(), false)
-	err := client.Authenticate(context.Background(), map[string]string{"mock": "mockHeader"})
-	require.NoError(t, err)
-
-}
-
-func TestAuthRoutes(t *testing.T) {
-	ts := newTestServer(http.MethodPost, common.ApiAuthRoutesRoute, responses.AuthRouteResponse{})
-	defer ts.Close()
-
-	client := NewUserClient(ts.URL, NewNullAuthenticationInjector(), false)
-	res, err := client.AuthRoutes(context.Background(), map[string]string{"mock": "mockHeader"}, []requests.AuthRouteRequest{})
-	require.NoError(t, err)
-	require.IsType(t, responses.AuthRouteResponse{}, res)
-}

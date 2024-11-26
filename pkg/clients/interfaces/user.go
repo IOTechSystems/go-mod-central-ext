@@ -29,8 +29,4 @@ type UserClient interface {
 	DeleteUserByName(ctx context.Context, name string) (common.BaseResponse, errors.EdgeX)
 	// Login logins a user by username and password
 	Login(ctx context.Context, req requests.LoginRequest) (responses.TokenResponse, errors.EdgeX)
-	// Authenticate authenticates and authorizes a user by request headers
-	Authenticate(ctx context.Context, headers map[string]string) errors.EdgeX
-	// AuthRoutes check user permissions on a sets of path-method pairs with the authorization header
-	AuthRoutes(ctx context.Context, headers map[string]string, reqs []requests.AuthRouteRequest) (responses.AuthRouteResponse, errors.EdgeX)
 }
