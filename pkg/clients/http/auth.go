@@ -4,6 +4,8 @@ package http
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
 
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/clients/interfaces"
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/common"
@@ -31,11 +33,18 @@ func NewAuthClient(baseUrl string, authInjector clientsInterfaces.Authentication
 func (ac AuthClient) Auth(ctx context.Context, headers map[string]string) (errors.EdgeX, string) {
 	var newJWT string
 
-	err := utils.PostRequestWithRawDataAndHeaders(ctx, &newJWT, ac.baseUrl, common.ApiAuthRoute, nil, nil, ac.authInjector, headers)
+	req, err := utils.CreateRequestWithRawDataAndHeaders(ctx, http.MethodPost, ac.baseUrl, common.ApiAuthRoute, nil, nil, headers)
 	if err != nil {
-		return errors.NewCommonEdgeXWrapper(err), newJWT
+		return errors.NewCommonEdgeXWrapper(err), ""
 	}
 
+	resp, err := utils.SendRequest(ctx, req, ac.authInjector)
+	if err != nil {
+		if resp != nil {
+			_ = json.Unmarshal(resp, &newJWT)
+		}
+		return errors.NewCommonEdgeXWrapper(err), newJWT
+	}
 	return nil, ""
 }
 
