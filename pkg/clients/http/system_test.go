@@ -29,6 +29,11 @@ func newTestServer(httpMethod string, apiRoute string, expectedResponse interfac
 		}
 
 		w.WriteHeader(http.StatusOK)
+
+		if expectedResponse == nil {
+			return
+		}
+
 		b, _ := json.Marshal(expectedResponse)
 		_, _ = w.Write(b)
 	}))

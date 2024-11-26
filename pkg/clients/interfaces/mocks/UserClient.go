@@ -114,35 +114,23 @@ func (_m *UserClient) AuthRoutes(ctx context.Context, headers map[string]string,
 }
 
 // Authenticate provides a mock function with given fields: ctx, headers
-func (_m *UserClient) Authenticate(ctx context.Context, headers map[string]string) (interface{}, errors.EdgeX) {
+func (_m *UserClient) Authenticate(ctx context.Context, headers map[string]string) errors.EdgeX {
 	ret := _m.Called(ctx, headers)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Authenticate")
 	}
 
-	var r0 interface{}
-	var r1 errors.EdgeX
-	if rf, ok := ret.Get(0).(func(context.Context, map[string]string) (interface{}, errors.EdgeX)); ok {
-		return rf(ctx, headers)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, map[string]string) interface{}); ok {
+	var r0 errors.EdgeX
+	if rf, ok := ret.Get(0).(func(context.Context, map[string]string) errors.EdgeX); ok {
 		r0 = rf(ctx, headers)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(interface{})
+			r0 = ret.Get(0).(errors.EdgeX)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, map[string]string) errors.EdgeX); ok {
-		r1 = rf(ctx, headers)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.EdgeX)
-		}
-	}
-
-	return r0, r1
+	return r0
 }
 
 // DeleteUserByName provides a mock function with given fields: ctx, name

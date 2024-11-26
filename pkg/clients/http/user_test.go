@@ -79,9 +79,9 @@ func TestAuthenticate(t *testing.T) {
 	defer ts.Close()
 
 	client := NewUserClient(ts.URL, NewNullAuthenticationInjector(), false)
-	res, err := client.Authenticate(context.Background(), map[string]string{"mock": "mockHeader"})
+	err := client.Authenticate(context.Background(), map[string]string{"mock": "mockHeader"})
 	require.NoError(t, err)
-	require.IsType(t, nil, res)
+
 }
 
 func TestAuthRoutes(t *testing.T) {
