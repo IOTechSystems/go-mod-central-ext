@@ -3,10 +3,10 @@ module github.com/IOTechSystems/go-mod-central-ext/v4
 go 1.23
 
 require (
-	github.com/edgexfoundry/go-mod-core-contracts/v4 v4.0.0-dev.11
+	github.com/edgexfoundry/go-mod-core-contracts/v4 v4.0.0-dev.12
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/google/uuid v1.6.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/xuri/excelize/v2 v2.9.0
 	go.einride.tech/can v0.12.1
 	google.golang.org/protobuf v1.35.2
