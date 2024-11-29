@@ -14,7 +14,6 @@ import (
 
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/clients/http/utils"
 	clientsInterfaces "github.com/edgexfoundry/go-mod-core-contracts/v4/clients/interfaces"
-	commonDTOs "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos/common"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"
 )
 
@@ -31,7 +30,7 @@ func NewAuthClient(baseUrl string, authInjector clientsInterfaces.Authentication
 	}
 }
 
-func (ac AuthClient) Auth(ctx context.Context, headers map[string]string) (errors.EdgeX, any) {
+func (ac AuthClient) Auth(ctx context.Context, headers map[string]string) (errors.EdgeX, string) {
 	var newJWT string
 
 	req, err := utils.CreateRequestWithRawDataAndHeaders(ctx, http.MethodPost, ac.baseUrl, common.ApiAuthRoute, nil, nil, headers)
@@ -42,16 +41,9 @@ func (ac AuthClient) Auth(ctx context.Context, headers map[string]string) (error
 	resp, err := utils.SendRequest(ctx, req, ac.authInjector)
 	if err != nil {
 		if resp != nil {
-			if strErr := json.Unmarshal(resp, &newJWT); strErr == nil {
-				return errors.NewCommonEdgeXWrapper(err), newJWT
-			}
-
-			var errResp commonDTOs.BaseResponse
-			if baseRespErr := json.Unmarshal(resp, &errResp); baseRespErr == nil {
-				return errors.NewCommonEdgeXWrapper(err), errResp
-			}
+			_ = json.Unmarshal(resp, &newJWT)
 		}
-		return errors.NewCommonEdgeXWrapper(err), nil
+		return errors.NewCommonEdgeX(errors.Kind(err), err.Message(), err), newJWT
 	}
 	return nil, ""
 }

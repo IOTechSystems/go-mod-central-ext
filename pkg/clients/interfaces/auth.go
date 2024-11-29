@@ -13,8 +13,8 @@ import (
 
 // AuthClient defines the interface for interactions with the auth API endpoint on the IOTech security-proxy-auth service.
 type AuthClient interface {
-	// Auth authenticates and authorizes a user by request headers
-	Auth(ctx context.Context, headers map[string]string) (errors.EdgeX, any)
+	// Auth validates and authorizes a user based on request headers and issues a new JWT if the exp claim has expired but the last chance issue claim is still valid
+	Auth(ctx context.Context, headers map[string]string) (err errors.EdgeX, newJWT string)
 	// AuthRoutes check user permissions on a sets of path-method pairs with the authorization header
 	AuthRoutes(ctx context.Context, headers map[string]string, reqs []requests.AuthRouteRequest) (responses.AuthRouteResponse, errors.EdgeX)
 }

@@ -1,7 +1,7 @@
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/edgexfoundry/go-mod-core-contracts/v4 v4.0.0-dev.12 h1:csWj4kb1ucwYXAPNzjEz1BIemT/uAcxtBEznub372is=
-github.com/edgexfoundry/go-mod-core-contracts/v4 v4.0.0-dev.12/go.mod h1:j0oSwpKMi/xgV5ju8XU5Rjf0cGPF88I0GaxTJTz5szY=
+github.com/edgexfoundry/go-mod-core-contracts/v4 v4.0.0-dev.13 h1:R/DDMy16RSqbSL9D0cLkwXtYuOdD6A9a4tbeEBXN8CM=
+github.com/edgexfoundry/go-mod-core-contracts/v4 v4.0.0-dev.13/go.mod h1:j0oSwpKMi/xgV5ju8XU5Rjf0cGPF88I0GaxTJTz5szY=
 github.com/fxamacker/cbor/v2 v2.7.0 h1:iM5WgngdRBanHcxugY4JySA0nk1wZorNOpTgCMedv5E=
 github.com/fxamacker/cbor/v2 v2.7.0/go.mod h1:pxXPTn3joSm21Gbwsv0w9OSA2y1HFR9qXEeXQVeNoDQ=
 github.com/gabriel-vasile/mimetype v1.4.3 h1:in2uUcidCuFcDKtdcBxlR0rJ1+fsokWf+uqxgUFjbI0=
