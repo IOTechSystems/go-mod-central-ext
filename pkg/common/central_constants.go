@@ -134,3 +134,9 @@ const (
 	EtherNetIPMinorRevision     = "MinorRevision"
 	EtherNetIPAddress           = "Address"
 )
+
+// Constants related for proxy auth
+const (
+	VerificationKeyType = "verification"
+	SigningKeyType      = "signing"
+)
