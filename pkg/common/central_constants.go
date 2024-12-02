@@ -139,4 +139,5 @@ const (
 const (
 	VerificationKeyType = "verification"
 	SigningKeyType      = "signing"
+	Issuer              = "issuer"
 )
