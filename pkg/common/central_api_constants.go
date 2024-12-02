@@ -37,6 +37,9 @@ const (
 	ApiLogoutRoute     = edgexCommon.ApiBase + "/logout"
 	ApiAuthRoute       = edgexCommon.ApiBase + "/auth"
 	ApiAuthRoutesRoute = edgexCommon.ApiBase + "/auth-routes"
+
+	ApiKeyRoute                     = edgexCommon.ApiBase + "/key"
+	ApiVerificationKeyByIssuerRoute = ApiKeyRoute + "/" + VerificationKeyType + "/" + Issuer + "/:" + Issuer
 )
 
 // constants relate to header names
