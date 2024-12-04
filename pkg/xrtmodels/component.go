@@ -19,6 +19,7 @@ const (
 	OPCUAServerUseMiddlewarePrefixEvent      = "OPCUAServerUseMiddlewarePrefixEvent"
 	OPCUAServerUseMiddlewarePrefixEdgeXEvent = "OPCUAServerUseMiddlewarePrefixEdgeXEvent"
 	OPCUAServerEdgeXEventTopicBase           = "OPCUAServerEdgeXEventTopicBase"
+	EdgeXCompat                              = "EdgeXCompat"
 
 	DeviceServiceCategory      = "XRT::DeviceService"
 	DeviceServiceRunningStatus = "Running"
