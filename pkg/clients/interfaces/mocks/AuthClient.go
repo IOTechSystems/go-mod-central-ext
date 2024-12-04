@@ -19,6 +19,36 @@ type AuthClient struct {
 	mock.Mock
 }
 
+// Auth provides a mock function with given fields: ctx, headers
+func (_m *AuthClient) Auth(ctx context.Context, headers map[string]string) (errors.EdgeX, string) {
+	ret := _m.Called(ctx, headers)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Auth")
+	}
+
+	var r0 errors.EdgeX
+	var r1 string
+	if rf, ok := ret.Get(0).(func(context.Context, map[string]string) (errors.EdgeX, string)); ok {
+		return rf(ctx, headers)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, map[string]string) errors.EdgeX); ok {
+		r0 = rf(ctx, headers)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.EdgeX)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, map[string]string) string); ok {
+		r1 = rf(ctx, headers)
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+
+	return r0, r1
+}
+
 // AuthRoutes provides a mock function with given fields: ctx, headers, reqs
 func (_m *AuthClient) AuthRoutes(ctx context.Context, headers map[string]string, reqs []requests.AuthRouteRequest) (responses.AuthRouteResponse, errors.EdgeX) {
 	ret := _m.Called(ctx, headers, reqs)
@@ -49,31 +79,31 @@ func (_m *AuthClient) AuthRoutes(ctx context.Context, headers map[string]string,
 	return r0, r1
 }
 
-// Authenticate provides a mock function with given fields: ctx, headers
-func (_m *AuthClient) Auth(ctx context.Context, headers map[string]string) (errors.EdgeX, string) {
-	ret := _m.Called(ctx, headers)
+// VerificationKeyByIssuer provides a mock function with given fields: ctx, issuer
+func (_m *AuthClient) VerificationKeyByIssuer(ctx context.Context, issuer string) (responses.KeyDataResponse, errors.EdgeX) {
+	ret := _m.Called(ctx, issuer)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Auth")
+		panic("no return value specified for VerificationKeyByIssuer")
 	}
 
-	var r0 errors.EdgeX
-	var r1 string
-	if rf, ok := ret.Get(0).(func(context.Context, map[string]string) (errors.EdgeX, string)); ok {
-		return rf(ctx, headers)
+	var r0 responses.KeyDataResponse
+	var r1 errors.EdgeX
+	if rf, ok := ret.Get(0).(func(context.Context, string) (responses.KeyDataResponse, errors.EdgeX)); ok {
+		return rf(ctx, issuer)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, map[string]string) errors.EdgeX); ok {
-		r0 = rf(ctx, headers)
+	if rf, ok := ret.Get(0).(func(context.Context, string) responses.KeyDataResponse); ok {
+		r0 = rf(ctx, issuer)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(errors.EdgeX)
+		r0 = ret.Get(0).(responses.KeyDataResponse)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) errors.EdgeX); ok {
+		r1 = rf(ctx, issuer)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.EdgeX)
 		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, map[string]string) string); ok {
-		r1 = rf(ctx, headers)
-	} else {
-		r1 = ret.Get(1).(string)
 	}
 
 	return r0, r1
