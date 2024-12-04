@@ -5,6 +5,7 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/clients/interfaces"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/clients/http/utils"
 	clientsInterfaces "github.com/edgexfoundry/go-mod-core-contracts/v4/clients/interfaces"
+	edgexCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/common"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"
 )
 
@@ -50,6 +52,16 @@ func (ac AuthClient) Auth(ctx context.Context, headers map[string]string) (error
 
 func (ac AuthClient) AuthRoutes(ctx context.Context, headers map[string]string, routeReqs []requests.AuthRouteRequest) (res responses.AuthRouteResponse, err errors.EdgeX) {
 	err = utils.PostRequestWithRawDataAndHeaders(ctx, &res, ac.baseUrl, common.ApiAuthRoutesRoute, nil, routeReqs, ac.authInjector, headers)
+	if err != nil {
+		return res, errors.NewCommonEdgeXWrapper(err)
+	}
+	return res, nil
+}
+
+func (ac AuthClient) VerificationKeyByIssuer(ctx context.Context, issuer string) (res responses.KeyDataResponse, err errors.EdgeX) {
+	path := edgexCommon.NewPathBuilder().SetPath(common.ApiKeyRoute).SetPath(common.VerificationKeyType).SetPath(common.Issuer).SetNameFieldPath(issuer).BuildPath()
+	fmt.Println("path: ", path)
+	err = utils.GetRequest(ctx, &res, ac.baseUrl, path, nil, ac.authInjector)
 	if err != nil {
 		return res, errors.NewCommonEdgeXWrapper(err)
 	}

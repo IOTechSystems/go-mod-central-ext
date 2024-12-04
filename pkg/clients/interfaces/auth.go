@@ -17,4 +17,6 @@ type AuthClient interface {
 	Auth(ctx context.Context, headers map[string]string) (err errors.EdgeX, newJWT string)
 	// AuthRoutes check user permissions on a sets of path-method pairs with the authorization header
 	AuthRoutes(ctx context.Context, headers map[string]string, reqs []requests.AuthRouteRequest) (responses.AuthRouteResponse, errors.EdgeX)
+	// VerificationKeyByIssuer returns the JWT verification key by the specified issuer
+	VerificationKeyByIssuer(ctx context.Context, issuer string) (res responses.KeyDataResponse, err errors.EdgeX)
 }
