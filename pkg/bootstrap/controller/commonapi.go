@@ -68,6 +68,16 @@ func NewCommonController(dic *di.Container, r *echo.Echo, serviceName string, se
 	return &c
 }
 
+// SetSDKVersion sets the service's skd version
+func (c *CommonController) SetSDKVersion(sdkVersion string) {
+	c.version.sdkVersion = sdkVersion
+}
+
+// SetCustomConfigInfo sets the custom configuration, which is used to include the service's custom config in the /config endpoint response.
+func (c *CommonController) SetCustomConfigInfo(customConfig interfaces.UpdatableConfig) {
+	c.config.customConfig = customConfig
+}
+
 // Ping handles the request to /ping endpoint. Is used to test if the service is working
 // It returns a response as specified by the API swagger in the openapi directory
 func (c *CommonController) Ping(e echo.Context) error {
