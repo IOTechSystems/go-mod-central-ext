@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/edgexfoundry/go-mod-bootstrap/v4/bootstrap/container"
-	"github.com/edgexfoundry/go-mod-bootstrap/v4/bootstrap/interfaces"
 	"github.com/edgexfoundry/go-mod-bootstrap/v4/bootstrap/secret"
 	"github.com/edgexfoundry/go-mod-bootstrap/v4/di"
 	dtoCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos/common"
@@ -38,13 +37,14 @@ const openBaoIssuer = "/v1/identity/oidc"
 // For typical usage, it is preferred to use AutoConfigAuthenticationFunc which
 // will automatically select between a real and a fake JWT validation handler.
 // func SecretStoreAuthenticationHandlerFunc(secretProvider interfaces.SecretProviderExt, lc logger.LoggingClient, serviceConfig interfaces.Configuration, authInjector contractInterfaces.AuthenticationInjector) echo.MiddlewareFunc {
-func SecretStoreAuthenticationHandlerFunc(dic *di.Container, serviceConfig interfaces.Configuration) echo.MiddlewareFunc {
+func SecretStoreAuthenticationHandlerFunc(dic *di.Container) echo.MiddlewareFunc {
 	return func(inner echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			r := c.Request()
 			w := c.Response()
 			lc := container.LoggingClientFrom(dic.Get)
 			secretProvider := container.SecretProviderExtFrom(dic.Get)
+			serviceConfig := container.ConfigurationFrom(dic.Get)
 			authInjector := secret.NewJWTSecretProvider(secretProvider)
 			authHeader := r.Header.Get("Authorization")
 			lc.Debugf("Authorizing incoming call to '%s' via JWT (Authorization len=%d), %v", r.URL.Path, len(authHeader), secretProvider.IsZeroTrustEnabled())
