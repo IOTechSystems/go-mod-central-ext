@@ -18,7 +18,7 @@ import (
 )
 
 // openBaoIssuer defines the issuer if JWT was issued from OpenBao
-const openBaoIssuer = " /v1/identity/oidc"
+const openBaoIssuer = "/v1/identity/oidc"
 
 // SecretStoreAuthenticationHandlerFunc prefixes an existing HandlerFunc
 // with a OpenBao-based JWT authentication check or a security-proxy-auth issued JWT check.  Usage:
