@@ -3,12 +3,13 @@ module github.com/IOTechSystems/go-mod-central-ext/v4
 go 1.23
 
 require (
-	github.com/edgexfoundry/go-mod-bootstrap/v4 v4.0.0-dev.9
+	github.com/edgexfoundry/go-mod-bootstrap/v4 v4.0.0-dev.11
 	github.com/edgexfoundry/go-mod-core-contracts/v4 v4.0.0-dev.14
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
-	github.com/labstack/echo/v4 v4.12.0
+	github.com/labstack/echo/v4 v4.13.0
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/stretchr/testify v1.10.0
 	github.com/xuri/excelize/v2 v2.9.0
 	go.einride.tech/can v0.12.1
@@ -19,8 +20,8 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/eclipse/paho.mqtt.golang v1.5.0 // indirect
-	github.com/edgexfoundry/go-mod-configuration/v4 v4.0.0-dev.4 // indirect
-	github.com/edgexfoundry/go-mod-messaging/v4 v4.0.0-dev.5 // indirect
+	github.com/edgexfoundry/go-mod-configuration/v4 v4.0.0-dev.7 // indirect
+	github.com/edgexfoundry/go-mod-messaging/v4 v4.0.0-dev.8 // indirect
 	github.com/edgexfoundry/go-mod-registry/v4 v4.0.0-dev.2 // indirect
 	github.com/edgexfoundry/go-mod-secrets/v4 v4.0.0-dev.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
@@ -40,7 +41,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/nats-io/nats.go v1.37.0 // indirect
