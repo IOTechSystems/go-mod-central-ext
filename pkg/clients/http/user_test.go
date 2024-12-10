@@ -73,3 +73,22 @@ func TestDeleteUserByName(t *testing.T) {
 	require.NoError(t, err)
 	require.IsType(t, dtoCommon.BaseResponse{}, res)
 }
+
+func TestLogin(t *testing.T) {
+	ts := newTestServer(http.MethodPost, common.ApiLoginRoute, responses.TokenResponse{})
+	defer ts.Close()
+
+	client := NewUserClient(ts.URL, NewNullAuthenticationInjector(), false)
+	res, err := client.Login(context.Background(), requests.LoginRequest{})
+	require.NoError(t, err)
+	require.IsType(t, responses.TokenResponse{}, res)
+}
+
+func TestLogout(t *testing.T) {
+	ts := newTestServer(http.MethodPost, common.ApiLogoutRoute, nil)
+	defer ts.Close()
+
+	client := NewUserClient(ts.URL, NewNullAuthenticationInjector(), false)
+	err := client.Logout(context.Background(), map[string]string{"mock": "mockHeader"})
+	require.NoError(t, err)
+}
