@@ -89,3 +89,11 @@ func (uc UserClient) Login(ctx context.Context, reqs requests.LoginRequest) (res
 	}
 	return res, nil
 }
+
+func (uc UserClient) Logout(ctx context.Context, headers map[string]string) errors.EdgeX {
+	err := utils.PostRequestWithRawDataAndHeaders(ctx, nil, uc.baseUrl, common.ApiLogoutRoute, nil, nil, uc.authInjector, headers)
+	if err != nil {
+		return errors.NewCommonEdgeXWrapper(err)
+	}
+	return nil
+}
