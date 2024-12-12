@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	stdErrs "errors"
 	"fmt"
+	"sync"
 
 	httpClients "github.com/IOTechSystems/go-mod-central-ext/v4/pkg/clients/http"
 
@@ -21,29 +22,62 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// A key cache to store the verification keys by issuer
+var (
+	keysCache = make(map[string]any)
+	mutex     sync.RWMutex
+)
+
 // verifyJWT verifies if the JWT is valid using the verification key from proxy-auth
 func verifyJWT(token string,
 	issuer string,
+	alg string,
 	serviceConfig interfaces.Configuration,
 	authInjector contractInterfaces.AuthenticationInjector,
 	lc logger.LoggingClient,
 	ctx context.Context) errors.EdgeX {
-	bootstrapClients := *serviceConfig.GetBootstrap().Clients
+	var verifyKey any
 
-	proxyAuthConfig, ok := bootstrapClients[common.SecurityProxyAuthServiceKey]
-	if !ok {
-		return errors.NewCommonEdgeX(errors.KindServerError, "security-proxy-auth client not defined in the service config", nil)
+	// Check if the verification of the issuer already exists
+	mutex.RLock()
+	key, ok := keysCache[issuer]
+	mutex.RUnlock()
+
+	if ok {
+		lc.Debugf("obtaining verification key from cache for JWT issuer '%s'", issuer)
+
+		verifyKey = key
+	} else {
+		lc.Debugf("obtaining verification key from proxy-auth service client for JWT issuer '%s'", issuer)
+
+		bootstrapClients := *serviceConfig.GetBootstrap().Clients
+
+		proxyAuthConfig, ok := bootstrapClients[common.SecurityProxyAuthServiceKey]
+		if !ok {
+			return errors.NewCommonEdgeX(errors.KindServerError, "security-proxy-auth client not defined in the service config", nil)
+		}
+
+		proxyAuthURL := proxyAuthConfig.Url()
+		authClient := httpClients.NewAuthClient(proxyAuthURL, authInjector)
+		keyResponse, edgexErr := authClient.VerificationKeyByIssuer(ctx, issuer)
+		if edgexErr != nil {
+			if errors.Kind(edgexErr) == errors.KindEntityDoesNotExist {
+				return errors.NewCommonEdgeX(errors.KindServerError, fmt.Sprintf("verification key not found from proxy-auth service for JWT issuer '%s'", issuer), nil)
+			}
+			return errors.NewCommonEdgeX(errors.KindServerError, fmt.Sprintf("failed to obtain the verification key from proxy-auth service for JWT issuer '%s'", issuer), edgexErr)
+		}
+		verifyKey, edgexErr = processVerificationKey(keyResponse.KeyData.Key, alg, lc)
+		if edgexErr != nil {
+			return errors.NewCommonEdgeX(errors.KindServerError, fmt.Sprintf("failed to process the verification key from proxy-auth service for JWT issuer '%s'", issuer), edgexErr)
+		}
+
+		mutex.Lock()
+		keysCache[issuer] = verifyKey
+		mutex.Unlock()
 	}
 
-	proxyAuthURL := proxyAuthConfig.Url()
-	authClient := httpClients.NewAuthClient(proxyAuthURL, authInjector)
-	keyResponse, edgexErr := authClient.VerificationKeyByIssuer(ctx, issuer)
-	if edgexErr != nil {
-		return errors.NewCommonEdgeX(errors.KindServerError, fmt.Sprintf("failed to obtaining the verification key from proxy-auth for issuer %s", issuer), edgexErr)
-	}
-
-	_, err := jwt.ParseWithClaims(token, &jwt.MapClaims{}, func(token *jwt.Token) (any, error) {
-		return processVerificationKey(keyResponse.KeyData.Key, token.Method.Alg(), lc, ctx)
+	_, err := jwt.ParseWithClaims(token, &jwt.MapClaims{}, func(_ *jwt.Token) (any, error) {
+		return verifyKey, nil
 	})
 	if err != nil {
 		if stdErrs.Is(err, jwt.ErrTokenExpired) {
@@ -66,7 +100,7 @@ func verifyJWT(token string,
 }
 
 // processVerificationKey processes the verification key obtained proxy-auth and return the public key with the corresponding format based on the JWT signing algorithm
-func processVerificationKey(keyString string, alg string, lc logger.LoggingClient, ctx context.Context) (any, errors.EdgeX) {
+func processVerificationKey(keyString string, alg string, lc logger.LoggingClient) (any, errors.EdgeX) {
 	keyBytes := []byte(keyString)
 
 	switch alg {
@@ -84,7 +118,6 @@ func processVerificationKey(keyString string, alg string, lc logger.LoggingClien
 			return nil, errors.NewCommonEdgeX(errors.KindServerError, "failed to decode the verification key PEM block", nil)
 		}
 
-		lc.Debugf("public key: %s", string(keyBytes))
 		edPublicKey := ed25519.PublicKey(block.Bytes)
 		return edPublicKey, nil
 	case jwt.SigningMethodRS256.Alg(), jwt.SigningMethodRS384.Alg(), jwt.SigningMethodRS512.Alg(),

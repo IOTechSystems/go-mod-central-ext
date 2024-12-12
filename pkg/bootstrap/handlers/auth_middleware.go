@@ -88,7 +88,7 @@ func SecretStoreAuthenticationHandlerFunc(dic *di.Container) echo.MiddlewareFunc
 
 				} else {
 					// Verify the JWT by invoking security-proxy-auth http client
-					err := verifyJWT(token, issuer, serviceConfig, authInjector, lc, r.Context())
+					err := verifyJWT(token, issuer, parsedToken.Method.Alg(), serviceConfig, authInjector, lc, r.Context())
 					if err != nil {
 						errResp := dtoCommon.NewBaseResponse("", err.Error(), err.Code())
 						return c.JSON(err.Code(), errResp)
