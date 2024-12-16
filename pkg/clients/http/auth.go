@@ -4,8 +4,6 @@ package http
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/clients/interfaces"
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/common"
@@ -15,6 +13,7 @@ import (
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/clients/http/utils"
 	clientsInterfaces "github.com/edgexfoundry/go-mod-core-contracts/v4/clients/interfaces"
 	edgexCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/common"
+	dtoCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos/common"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"
 )
 
@@ -31,22 +30,12 @@ func NewAuthClient(baseUrl string, authInjector clientsInterfaces.Authentication
 	}
 }
 
-func (ac AuthClient) Auth(ctx context.Context, headers map[string]string) (errors.EdgeX, string) {
-	var newJWT string
-
-	req, err := utils.CreateRequestWithRawDataAndHeaders(ctx, http.MethodPost, ac.baseUrl, common.ApiAuthRoute, nil, nil, headers)
+func (ac AuthClient) Auth(ctx context.Context, headers map[string]string) (res dtoCommon.BaseResponse, err errors.EdgeX) {
+	err = utils.PostRequestWithRawDataAndHeaders(ctx, &res, ac.baseUrl, common.ApiAuthRoute, nil, nil, ac.authInjector, headers)
 	if err != nil {
-		return errors.NewCommonEdgeXWrapper(err), ""
+		return res, errors.NewCommonEdgeXWrapper(err)
 	}
-
-	resp, err := utils.SendRequest(ctx, req, ac.authInjector)
-	if err != nil {
-		if resp != nil {
-			_ = json.Unmarshal(resp, &newJWT)
-		}
-		return errors.NewCommonEdgeX(errors.Kind(err), err.Message(), err), newJWT
-	}
-	return nil, ""
+	return res, nil
 }
 
 func (ac AuthClient) AuthRoutes(ctx context.Context, headers map[string]string, routeReqs []requests.AuthRouteRequest) (res responses.AuthRouteResponse, err errors.EdgeX) {
@@ -60,6 +49,14 @@ func (ac AuthClient) AuthRoutes(ctx context.Context, headers map[string]string, 
 func (ac AuthClient) VerificationKeyByIssuer(ctx context.Context, issuer string) (res responses.KeyDataResponse, err errors.EdgeX) {
 	path := edgexCommon.NewPathBuilder().SetPath(common.ApiKeyRoute).SetPath(common.VerificationKeyType).SetPath(common.Issuer).SetNameFieldPath(issuer).BuildPath()
 	err = utils.GetRequest(ctx, &res, ac.baseUrl, path, nil, ac.authInjector)
+	if err != nil {
+		return res, errors.NewCommonEdgeXWrapper(err)
+	}
+	return res, nil
+}
+
+func (ac AuthClient) RefreshToken(ctx context.Context, headers map[string]string) (res responses.TokenResponse, err errors.EdgeX) {
+	err = utils.PostRequestWithRawDataAndHeaders(ctx, &res, ac.baseUrl, common.ApiRefreshTokenRoute, nil, nil, ac.authInjector, headers)
 	if err != nil {
 		return res, errors.NewCommonEdgeXWrapper(err)
 	}

@@ -12,17 +12,19 @@ import (
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/dtos/requests"
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/dtos/responses"
 
+	dtoCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos/common"
+
 	"github.com/stretchr/testify/require"
 )
 
 func TestAuthenticate(t *testing.T) {
-	ts := newTestServer(http.MethodPost, common.ApiAuthRoute, "abc")
+	ts := newTestServer(http.MethodPost, common.ApiAuthRoute, dtoCommon.BaseResponse{})
 	defer ts.Close()
 
 	client := NewAuthClient(ts.URL, NewNullAuthenticationInjector())
-	err, jwt := client.Auth(context.Background(), map[string]string{"mock": "mockHeader"})
+	res, err := client.Auth(context.Background(), map[string]string{"mock": "mockHeader"})
 	require.NoError(t, err)
-	require.IsType(t, "abc", jwt)
+	require.IsType(t, dtoCommon.BaseResponse{}, res)
 }
 
 func TestAuthRoutes(t *testing.T) {
@@ -45,4 +47,14 @@ func TestVerificationKeyByIssuer(t *testing.T) {
 	res, err := client.VerificationKeyByIssuer(context.Background(), mockIssuer)
 	require.NoError(t, err)
 	require.IsType(t, responses.KeyDataResponse{}, res)
+}
+
+func TestRefreshToken(t *testing.T) {
+	ts := newTestServer(http.MethodPost, common.ApiRefreshTokenRoute, responses.TokenResponse{})
+	defer ts.Close()
+
+	client := NewAuthClient(ts.URL, NewNullAuthenticationInjector())
+	res, err := client.RefreshToken(context.Background(), map[string]string{"mock": "mockHeader"})
+	require.NoError(t, err)
+	require.IsType(t, responses.TokenResponse{}, res)
 }
