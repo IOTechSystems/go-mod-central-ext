@@ -33,10 +33,11 @@ const (
 	ApiAllUserRoute    = ApiUserRoute + "/" + edgexCommon.All
 	ApiUserByNameRoute = ApiUserRoute + "/" + edgexCommon.Name + "/:" + edgexCommon.Name
 
-	ApiLoginRoute      = edgexCommon.ApiBase + "/login"
-	ApiLogoutRoute     = edgexCommon.ApiBase + "/logout"
-	ApiAuthRoute       = edgexCommon.ApiBase + "/auth"
-	ApiAuthRoutesRoute = edgexCommon.ApiBase + "/auth-routes"
+	ApiLoginRoute        = edgexCommon.ApiBase + "/login"
+	ApiLogoutRoute       = edgexCommon.ApiBase + "/logout"
+	ApiAuthRoute         = edgexCommon.ApiBase + "/auth"
+	ApiAuthRoutesRoute   = edgexCommon.ApiBase + "/auth-routes"
+	ApiRefreshTokenRoute = edgexCommon.ApiBase + "/refresh-token"
 
 	ApiKeyRoute                     = edgexCommon.ApiBase + "/key"
 	ApiVerificationKeyByIssuerRoute = ApiKeyRoute + "/" + VerificationKeyType + "/" + Issuer + "/:" + Issuer
