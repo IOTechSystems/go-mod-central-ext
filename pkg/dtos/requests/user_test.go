@@ -57,6 +57,8 @@ func TestAddUserRequest_Validate(t *testing.T) {
 	invalidUserPass.User.Password = "invalidpass"
 	invalidUserPassTooShort := testAddUser
 	invalidUserPassTooShort.User.Password = "Inv3&"
+	invalidUserRolesDup := testAddUser
+	invalidUserRolesDup.User.Roles = []string{"admin", "admin"}
 	tests := []struct {
 		name        string
 		User        AddUserRequest
@@ -66,6 +68,7 @@ func TestAddUserRequest_Validate(t *testing.T) {
 		{"invalid AddUserRequest, username not starts with letter or digit", invalidUsername, true},
 		{"invalid AddUserRequest, password not contains digit and special character", invalidUserPass, true},
 		{"invalid AddUserRequest, password is too short", invalidUserPassTooShort, true},
+		{"invalid AddUserRequest, there are duplicate roles", invalidUserRolesDup, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -136,6 +139,8 @@ func TestUpdateUserRequest_Validate(t *testing.T) {
 	invalidPassTooShort := "Inv3&"
 	invalidUserPassTooShort := testUpdateUser
 	invalidUserPassTooShort.User.Password = &invalidPassTooShort
+	invalidUserRolesDup := testUpdateUser
+	invalidUserRolesDup.User.Roles = []string{"admin", "admin"}
 
 	tests := []struct {
 		name        string
@@ -146,6 +151,7 @@ func TestUpdateUserRequest_Validate(t *testing.T) {
 		{"invalid UpdateUserRequest, username empty", invalidNoName, true},
 		{"invalid UpdateUserRequest, password not contains digit and special character", invalidUserPass, true},
 		{"invalid UpdateUserRequest, password is too short", invalidUserPassTooShort, true},
+		{"invalid UpdateUserRequest, there are duplicate roles", invalidUserRolesDup, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
