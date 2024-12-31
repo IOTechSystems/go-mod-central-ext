@@ -14,7 +14,7 @@ type User struct {
 	DisplayName string   `json:"displayName"`
 	Password    string   `json:"password,omitempty" validate:"required,edgex-dto-none-empty-string,edgex-dto-password"`
 	Description string   `json:"description"`
-	Roles       []string `json:"roles,omitempty"`
+	Roles       []string `json:"roles,omitempty" validate:"unique"`
 }
 
 type UpdateUser struct {
@@ -24,7 +24,7 @@ type UpdateUser struct {
 	DisplayName *string  `json:"displayName"`
 	Password    *string  `json:"password" validate:"omitempty,edgex-dto-password"`
 	Description *string  `json:"description" validate:"omitempty"`
-	Roles       []string `json:"roles"`
+	Roles       []string `json:"roles" validate:"unique"`
 }
 
 // ToUserModel transforms the User DTO to the User Model
