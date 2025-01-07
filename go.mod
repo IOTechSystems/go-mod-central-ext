@@ -4,7 +4,7 @@ go 1.23
 
 require (
 	github.com/edgexfoundry/go-mod-bootstrap/v4 v4.0.0-dev.15
-	github.com/edgexfoundry/go-mod-core-contracts/v4 v4.0.0-dev.16
+	github.com/edgexfoundry/go-mod-core-contracts/v4 v4.0.0-dev.19
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
