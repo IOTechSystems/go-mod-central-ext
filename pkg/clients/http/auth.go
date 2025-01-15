@@ -38,6 +38,14 @@ func (ac AuthClient) Auth(ctx context.Context, headers map[string]string) (res d
 	return res, nil
 }
 
+func (ac AuthClient) AuthGraphQL(ctx context.Context, headers map[string]string, req requests.AuthGraphQLRequest) (res dtoCommon.BaseResponse, err errors.EdgeX) {
+	err = utils.PostRequestWithRawDataAndHeaders(ctx, &res, ac.baseUrl, common.ApiAuthGraphQLRoute, nil, req, ac.authInjector, headers)
+	if err != nil {
+		return res, errors.NewCommonEdgeXWrapper(err)
+	}
+	return res, nil
+}
+
 func (ac AuthClient) AuthRoutes(ctx context.Context, headers map[string]string, routeReqs []requests.AuthRouteRequest) (res responses.AuthRouteResponse, err errors.EdgeX) {
 	err = utils.PostRequestWithRawDataAndHeaders(ctx, &res, ac.baseUrl, common.ApiAuthRoutesRoute, nil, routeReqs, ac.authInjector, headers)
 	if err != nil {

@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2025 IOTech Ltd
 
 package dtos
 
@@ -16,9 +16,20 @@ type RolePolicy struct {
 }
 
 type AccessPolicy struct {
-	Path        string   `json:"path" validate:"required,edgex-dto-none-empty-string"`
-	HttpMethods []string `json:"httpMethods" validate:"unique,gt=0,dive,oneof=GET HEAD POST PUT DELETE CONNECT OPTIONS TRACE PATCH,required"`
-	Effect      string   `json:"effect" validate:"required,oneof=allow deny"`
+	// Path is used to define the path of the API endpoint
+	//
+	// For REST APIs, it should be the path of the API endpoint with simple wildcard usage.
+	// Check the "keyMatch" function in Casbin for more details (https://casbin.org/docs/function/)
+	//
+	// e.g. /api/v1/device or /api/v1/device/*
+	//
+	// For GraphQL APIs, it should be the path of the API endpoint with regex pattern for more flexible control.
+	// Check the "regexMatch" function in Casbin for more details (https://casbin.org/docs/function/)
+	//
+	// e.g. /alarms-service/graphql/DisableAlarm or ^/alarms-service/graphql/[^/]*Alarm$
+	Path    string   `json:"path" validate:"required,edgex-dto-none-empty-string"`
+	Methods []string `json:"methods" validate:"unique,gt=0,dive,oneof=GET HEAD POST PUT DELETE CONNECT OPTIONS TRACE PATCH QUERY MUTATION SUBSCRIPTION,required"`
+	Effect  string   `json:"effect" validate:"required,oneof=allow deny"`
 }
 
 // ToRolePolicyModel transforms the RolePolicy DTO to the RolePolicy Model
@@ -54,9 +65,9 @@ func FromRolePolicyModelsToDTOs(rolePolicies []models.RolePolicy) []RolePolicy {
 // ToAccessPolicyModel transforms the AccessPolicy DTO to the AccessPolicy model
 func ToAccessPolicyModel(accessPolicyDTO AccessPolicy) models.AccessPolicy {
 	return models.AccessPolicy{
-		Path:        accessPolicyDTO.Path,
-		HttpMethods: accessPolicyDTO.HttpMethods,
-		Effect:      accessPolicyDTO.Effect,
+		Path:    accessPolicyDTO.Path,
+		Methods: accessPolicyDTO.Methods,
+		Effect:  accessPolicyDTO.Effect,
 	}
 }
 
@@ -72,9 +83,9 @@ func ToAccessPolicyModels(accessPolicyDTOs []AccessPolicy) []models.AccessPolicy
 // FromAccessPolicyModelToDTO transforms the AccessPolicy Model to the AccessPolicy DTO
 func FromAccessPolicyModelToDTO(d models.AccessPolicy) AccessPolicy {
 	return AccessPolicy{
-		Path:        d.Path,
-		HttpMethods: d.HttpMethods,
-		Effect:      d.Effect,
+		Path:    d.Path,
+		Methods: d.Methods,
+		Effect:  d.Effect,
 	}
 }
 
@@ -88,8 +99,8 @@ func FromAccessPolicyModelsToDTOs(accessPolicies []models.AccessPolicy) []Access
 }
 
 type AuthRoute struct {
-	Path       string `json:"path" validate:"required,edgex-dto-none-empty-string"`
-	HttpMethod string `json:"httpMethod" validate:"oneof=GET HEAD POST PUT DELETE CONNECT OPTIONS TRACE PATCH,required"`
+	Path   string `json:"path" validate:"required,edgex-dto-none-empty-string"`
+	Method string `json:"method" validate:"oneof=GET HEAD POST PUT DELETE CONNECT OPTIONS TRACE PATCH QUERY MUTATION SUBSCRIPTION,required"`
 }
 
 // AuthRouteResult defines the content for auth route result

@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2025 IOTech Ltd
 
 package common
 
@@ -36,6 +36,7 @@ const (
 	ApiLoginRoute        = edgexCommon.ApiBase + "/login"
 	ApiLogoutRoute       = edgexCommon.ApiBase + "/logout"
 	ApiAuthRoute         = edgexCommon.ApiBase + "/auth"
+	ApiAuthGraphQLRoute  = ApiAuthRoute + "/graphql"
 	ApiAuthRoutesRoute   = edgexCommon.ApiBase + "/auth-routes"
 	ApiRefreshTokenRoute = edgexCommon.ApiBase + "/refresh-token"
 

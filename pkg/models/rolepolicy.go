@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2025 IOTech Ltd
 
 package models
 
@@ -15,7 +15,7 @@ type RolePolicy struct {
 }
 
 type AccessPolicy struct {
-	Path        string
-	HttpMethods []string
-	Effect      string
+	Path    string
+	Methods []string
+	Effect  string
 }

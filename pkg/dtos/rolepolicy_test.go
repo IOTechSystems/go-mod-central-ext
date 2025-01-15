@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2025 IOTech Ltd
 
 package dtos
 
@@ -17,14 +17,14 @@ var (
 	mockEffect  = "allow"
 
 	mockAccessPolicyDTO = AccessPolicy{
-		Path:        mockPath,
-		HttpMethods: mockMethods,
-		Effect:      mockEffect,
+		Path:    mockPath,
+		Methods: mockMethods,
+		Effect:  mockEffect,
 	}
 	mockAccessPolicyModel = models.AccessPolicy{
-		Path:        mockPath,
-		HttpMethods: mockMethods,
-		Effect:      mockEffect,
+		Path:    mockPath,
+		Methods: mockMethods,
+		Effect:  mockEffect,
 	}
 	mockRolePolicyDTO = RolePolicy{
 		Role:           mockRole,
