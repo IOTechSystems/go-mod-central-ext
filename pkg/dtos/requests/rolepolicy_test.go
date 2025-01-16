@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2025 IOTech Ltd
 
 package requests
 
@@ -18,19 +18,19 @@ import (
 var (
 	mockRole        = "mockAdmin"
 	mockDescription = "A test admin role"
-	mockPath        = "*/core-command/*"
+	mockPath        = "/core-command"
 	mockMethods     = []string{"GET", "PUT"}
 	mockEffect      = "allow"
 
 	mockAccessPolicyDTO = dtos.AccessPolicy{
-		Path:        mockPath,
-		HttpMethods: mockMethods,
-		Effect:      mockEffect,
+		Path:    mockPath,
+		Methods: mockMethods,
+		Effect:  mockEffect,
 	}
 	mockAccessPolicyModel = models.AccessPolicy{
-		Path:        mockPath,
-		HttpMethods: mockMethods,
-		Effect:      mockEffect,
+		Path:    mockPath,
+		Methods: mockMethods,
+		Effect:  mockEffect,
 	}
 	mockRolePolicyDTO = dtos.RolePolicy{
 		Role:           mockRole,
@@ -45,8 +45,8 @@ var (
 		RolePolicy: mockRolePolicyDTO,
 	}
 	mockAuthRoute = dtos.AuthRoute{
-		Path:       "/core-metadata/*/device/name/abc",
-		HttpMethod: "DELETE",
+		Path:   "/core-metadata/.*/device/name/abc",
+		Method: "DELETE",
 	}
 	testAuthRouteRequest = AuthRouteRequest{
 		BaseRequest: dtoCommon.BaseRequest{
@@ -54,6 +54,17 @@ var (
 			Versionable: dtoCommon.NewVersionable(),
 		},
 		AuthRoute: mockAuthRoute,
+	}
+	mockAuthGraphQL = dtos.AuthGraphQL{
+		Path:   "^/alarms-service/graphql/[^/]*Alarm$",
+		Method: "MUTATION",
+	}
+	testAuthGraphQLRequest = AuthGraphQLRequest{
+		BaseRequest: dtoCommon.BaseRequest{
+			RequestId:   common.ExampleUUID,
+			Versionable: dtoCommon.NewVersionable(),
+		},
+		AuthGraphQL: mockAuthGraphQL,
 	}
 )
 
@@ -72,17 +83,17 @@ func TestAddRolePolicyRequest_Validate(t *testing.T) {
 	invalidAccessPolicy.RolePolicy.AccessPolicies = []dtos.AccessPolicy{emptyPathAccessPolicy}
 
 	emptyMethodAccessPolicy := mockAccessPolicyDTO
-	emptyMethodAccessPolicy.HttpMethods = nil
+	emptyMethodAccessPolicy.Methods = nil
 	emptyMethodPolicy := valid
 	emptyMethodPolicy.RolePolicy.AccessPolicies = []dtos.AccessPolicy{emptyMethodAccessPolicy}
 
 	invalidMethodAccessPolicy := mockAccessPolicyDTO
-	invalidMethodAccessPolicy.HttpMethods = []string{"invalid"}
+	invalidMethodAccessPolicy.Methods = []string{"invalid"}
 	invalidMethodPolicy := valid
 	invalidMethodPolicy.RolePolicy.AccessPolicies = []dtos.AccessPolicy{invalidMethodAccessPolicy}
 
 	dupMethodAccessPolicy := mockAccessPolicyDTO
-	dupMethodAccessPolicy.HttpMethods = []string{"GET", "GET"}
+	dupMethodAccessPolicy.Methods = []string{"GET", "GET"}
 	dupMethodPolicy := valid
 	dupMethodPolicy.RolePolicy.AccessPolicies = []dtos.AccessPolicy{dupMethodAccessPolicy}
 	tests := []struct {
@@ -162,10 +173,10 @@ func TestAuthRouteRequest_Validate(t *testing.T) {
 	emptyPath.AuthRoute.Path = ""
 
 	emptyMethod := valid
-	emptyMethod.AuthRoute.HttpMethod = ""
+	emptyMethod.AuthRoute.Method = ""
 
 	invalidMethod := valid
-	invalidMethod.AuthRoute.HttpMethod = "invalid"
+	invalidMethod.AuthRoute.Method = "invalid"
 	tests := []struct {
 		name         string
 		authRouteReq AuthRouteRequest
@@ -215,6 +226,71 @@ func TestAuthRouteRequest_UnmarshalJSON(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, expected, tt.authRouteReq, "Unmarshal did not result in expected AuthRouteRequest")
+			}
+		})
+	}
+}
+
+func TestAuthGraphQLRequest_Validate(t *testing.T) {
+	valid := testAuthGraphQLRequest
+
+	emptyPath := valid
+	emptyPath.Path = ""
+
+	emptyMethod := valid
+	emptyMethod.Method = ""
+
+	invalidMethod := valid
+	invalidMethod.Method = "invalid"
+	tests := []struct {
+		name           string
+		authGraphQLReq AuthGraphQLRequest
+		expectError    bool
+	}{
+		{"valid AuthGraphQLRequest", valid, false},
+		{"invalid AuthGraphQLRequest, empty path", emptyPath, true},
+		{"invalid AuthGraphQLRequest, empty Method", emptyMethod, true},
+		{"invalid AuthGraphQLRequest, invalid Method", invalidMethod, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.authGraphQLReq.Validate()
+			if tt.expectError {
+				require.Error(t, err, fmt.Sprintf("expect error but not : %s", tt.name))
+			} else {
+				require.NoError(t, err, fmt.Sprintf("unexpected error occurs : %s", tt.name))
+			}
+		})
+	}
+}
+
+func TestAuthGraphQLRequest_UnmarshalJSON(t *testing.T) {
+	valid := testAuthGraphQLRequest
+	resultTestBytes, _ := json.Marshal(testAuthGraphQLRequest)
+	type args struct {
+		data []byte
+	}
+
+	tests := []struct {
+		name           string
+		authGraphQLReq AuthGraphQLRequest
+		args           args
+		wantErr        bool
+	}{
+		{"unmarshal AuthGraphQLRequest with success", valid, args{resultTestBytes}, false},
+		{"unmarshal invalid AuthGraphQLRequest, empty data", AuthGraphQLRequest{}, args{[]byte{}}, true},
+		{"unmarshal invalid AuthGraphQLRequest, string data", AuthGraphQLRequest{}, args{[]byte("Invalid AuthGraphQLRequest")}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var expected = tt.authGraphQLReq
+			err := tt.authGraphQLReq.UnmarshalJSON(tt.args.data)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, expected, tt.authGraphQLReq, "Unmarshal did not result in expected AuthGraphQLRequest")
 			}
 		})
 	}

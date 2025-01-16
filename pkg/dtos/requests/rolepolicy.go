@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2025 IOTech Ltd
 
 package requests
 
@@ -76,6 +76,36 @@ func (a *AuthRouteRequest) UnmarshalJSON(b []byte) error {
 
 	*a = AuthRouteRequest(alias)
 	// Validate AuthRouteRequest DTO
+	if err := a.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// AuthGraphQLRequest defines the Request Content for POST AuthGraphQL DTO
+type AuthGraphQLRequest struct {
+	dtoCommon.BaseRequest `json:",inline"`
+	dtos.AuthGraphQL      `json:",inline"`
+}
+
+// Validate satisfies the Validator interface
+func (a *AuthGraphQLRequest) Validate() error {
+	err := edgexCommon.Validate(a)
+	return err
+}
+
+// UnmarshalJSON implements the Unmarshaler interface for the AuthRouteRequest type
+func (a *AuthGraphQLRequest) UnmarshalJSON(b []byte) error {
+	var alias struct {
+		dtoCommon.BaseRequest
+		dtos.AuthGraphQL
+	}
+	if err := json.Unmarshal(b, &alias); err != nil {
+		return errors.NewCommonEdgeX(errors.KindContractInvalid, "Failed to unmarshal request body as JSON.", err)
+	}
+
+	*a = AuthGraphQLRequest(alias)
+	// Validate AuthGraphQLRequest DTO
 	if err := a.Validate(); err != nil {
 		return err
 	}
