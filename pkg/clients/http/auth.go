@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2025 IOTech Ltd
 
 package http
 
@@ -32,6 +32,14 @@ func NewAuthClient(baseUrl string, authInjector clientsInterfaces.Authentication
 
 func (ac AuthClient) Auth(ctx context.Context, headers map[string]string) (res dtoCommon.BaseResponse, err errors.EdgeX) {
 	err = utils.PostRequestWithRawDataAndHeaders(ctx, &res, ac.baseUrl, common.ApiAuthRoute, nil, nil, ac.authInjector, headers)
+	if err != nil {
+		return res, errors.NewCommonEdgeXWrapper(err)
+	}
+	return res, nil
+}
+
+func (ac AuthClient) AuthGraphQL(ctx context.Context, headers map[string]string, req requests.AuthGraphQLRequest) (res dtoCommon.BaseResponse, err errors.EdgeX) {
+	err = utils.PostRequestWithRawDataAndHeaders(ctx, &res, ac.baseUrl, common.ApiAuthGraphQLRoute, nil, req, ac.authInjector, headers)
 	if err != nil {
 		return res, errors.NewCommonEdgeXWrapper(err)
 	}

@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2025 IOTech Ltd
 
 package dtos
 
@@ -12,19 +12,19 @@ import (
 
 var (
 	mockRole    = "mockAdmin"
-	mockPath    = "*/core-command/*"
+	mockPath    = "/core-command"
 	mockMethods = []string{"GET", "PUT"}
 	mockEffect  = "allow"
 
 	mockAccessPolicyDTO = AccessPolicy{
-		Path:        mockPath,
-		HttpMethods: mockMethods,
-		Effect:      mockEffect,
+		Path:    mockPath,
+		Methods: mockMethods,
+		Effect:  mockEffect,
 	}
 	mockAccessPolicyModel = models.AccessPolicy{
-		Path:        mockPath,
-		HttpMethods: mockMethods,
-		Effect:      mockEffect,
+		Path:    mockPath,
+		Methods: mockMethods,
+		Effect:  mockEffect,
 	}
 	mockRolePolicyDTO = RolePolicy{
 		Role:           mockRole,

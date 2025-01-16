@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2024 IOTech Ltd
+// Copyright (C) 2022-2025 IOTech Ltd
 
 package common
 
@@ -140,4 +140,8 @@ const (
 	VerificationKeyType = "verification"
 	SigningKeyType      = "signing"
 	Issuer              = "issuer"
+
+	Query        = "QUERY"
+	Mutation     = "MUTATION"
+	Subscription = "SUBSCRIPTION"
 )

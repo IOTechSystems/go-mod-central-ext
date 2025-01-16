@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2025 IOTech Ltd
 
 package responses
 
@@ -43,15 +43,15 @@ func TestNewMultiRolePolicyResponse(t *testing.T) {
 func TestNewAuthRouteResponse(t *testing.T) {
 	mockAuthRouteResult1 := dtos.AuthRouteResult{
 		AuthRoute: dtos.AuthRoute{
-			Path:       "/core-metadata/*/device/name/abc",
-			HttpMethod: "DELETE",
+			Path:   "/core-metadata/.*/device/name/abc",
+			Method: "DELETE",
 		},
 		AuthResult: false,
 	}
 	mockAuthRouteResult2 := dtos.AuthRouteResult{
 		AuthRoute: dtos.AuthRoute{
-			Path:       "/core-data/*/event",
-			HttpMethod: "GET",
+			Path:   "/core-data/.*/event",
+			Method: "GET",
 		},
 		AuthResult: true,
 	}
