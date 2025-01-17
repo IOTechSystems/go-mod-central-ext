@@ -8,7 +8,7 @@ type AuthGraphQL struct {
 	// It must follow the format: /service-endpoint/field-name
 	//
 	// e.g. /alarms-service/graphql/Alarms
-	// "/alarms-service/graphql/" is the service endpoint, "Alarms" is the QUERY field name.
+	// "/alarms-service/graphql" is the service endpoint, "Alarms" is the QUERY field name.
 	//
 	// e.g. /alarms-service/graphql/DisableAlarm
 	// "/alarms-service/graphql" is the service endpoint, "DisableAlarm" is the MUTATION field name.
