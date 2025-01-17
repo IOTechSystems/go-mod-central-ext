@@ -17,15 +17,13 @@ type RolePolicy struct {
 
 type AccessPolicy struct {
 	// Path is used to define the path of the API endpoint
-	//
-	// For REST APIs, it should be the path of the API endpoint with simple wildcard usage.
-	// Check the "keyMatch" function in Casbin for more details (https://casbin.org/docs/function/)
-	//
-	// e.g. /api/v1/device or /api/v1/device/*
-	//
-	// For GraphQL APIs, it should be the path of the API endpoint with regex pattern for more flexible control.
+	// It should be the path of the API endpoint with regex pattern for more flexible control.
 	// Check the "regexMatch" function in Casbin for more details (https://casbin.org/docs/function/)
 	//
+	// For REST APIs,
+	// e.g. /api/v1/device or /api/v1/device/.*
+	//
+	// For GraphQL APIs, it must follow the format: /service-endpoint/field-name
 	// e.g. /alarms-service/graphql/DisableAlarm or ^/alarms-service/graphql/[^/]*Alarm$
 	Path    string   `json:"path" validate:"required,edgex-dto-none-empty-string"`
 	Methods []string `json:"methods" validate:"unique,gt=0,dive,oneof=GET HEAD POST PUT DELETE CONNECT OPTIONS TRACE PATCH QUERY MUTATION SUBSCRIPTION,required"`
