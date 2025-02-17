@@ -4,7 +4,7 @@ go 1.23
 
 require (
 	github.com/edgexfoundry/go-mod-core-contracts/v4 v4.0.0-dev.26
-	github.com/go-playground/validator/v10 v10.24.0
+	github.com/go-playground/validator/v10 v10.25.0
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.10.0
 	github.com/xuri/excelize/v2 v2.9.0
