@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2025 IOTech Ltd
 
 package http
 
@@ -21,13 +21,13 @@ import (
 const mockRoleName = "testRole"
 
 func TestAddRolePolicy(t *testing.T) {
-	ts := newTestServer(http.MethodPost, common.ApiRolePolicyRoute, dtoCommon.BaseWithIdResponse{})
+	ts := newTestServer(http.MethodPost, common.ApiRolePolicyRoute, dtoCommon.BaseResponse{})
 	defer ts.Close()
 
 	client := NewRolePolicyClient(ts.URL, NewNullAuthenticationInjector(), false)
 	res, err := client.Add(context.Background(), requests.AddRolePolicyRequest{})
 	require.NoError(t, err)
-	require.IsType(t, dtoCommon.BaseWithIdResponse{}, res)
+	require.IsType(t, dtoCommon.BaseResponse{}, res)
 }
 
 func TestUpdateRolePolicy(t *testing.T) {

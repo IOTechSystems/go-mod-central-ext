@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2025 IOTech Ltd
 
 package http
 
@@ -34,7 +34,7 @@ func NewRolePolicyClient(baseUrl string, authInjector clientsInterfaces.Authenti
 	}
 }
 
-func (uc RolePolicyClient) Add(ctx context.Context, reqs requests.AddRolePolicyRequest) (res dtoCommon.BaseWithIdResponse, err errors.EdgeX) {
+func (uc RolePolicyClient) Add(ctx context.Context, reqs requests.AddRolePolicyRequest) (res dtoCommon.BaseResponse, err errors.EdgeX) {
 	err = utils.PostRequestWithRawData(ctx, &res, uc.baseUrl, common.ApiRolePolicyRoute, nil, reqs, uc.authInjector)
 	if err != nil {
 		return res, errors.NewCommonEdgeXWrapper(err)
