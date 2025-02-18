@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2025 IOTech Ltd
 
 package interfaces
 
@@ -15,7 +15,7 @@ import (
 // RolePolicyClient defines the interface for interactions with the role policy API endpoint on the IOTech security-proxy-auth service.
 type RolePolicyClient interface {
 	// Add adds new a role policy.
-	Add(ctx context.Context, reqs requests.AddRolePolicyRequest) (common.BaseWithIdResponse, errors.EdgeX)
+	Add(ctx context.Context, reqs requests.AddRolePolicyRequest) (common.BaseResponse, errors.EdgeX)
 	// Update updates a role policy.
 	Update(ctx context.Context, reqs requests.AddRolePolicyRequest) (common.BaseResponse, errors.EdgeX)
 	// AllRolePolicies returns all role policies.
