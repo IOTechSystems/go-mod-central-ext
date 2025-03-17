@@ -47,6 +47,7 @@ const (
 	SupportSparkplugServiceKey          = "support-sparkplug"
 	SupportSparkplugHistorianServiceKey = "support-sparkplug-historian"
 	SupportRulesEngineServiceKey        = "support-rulesengine"
+	EdgeHistorianServiceKey             = "edge-historian"
 )
 
 // Constants related for Notification Category
