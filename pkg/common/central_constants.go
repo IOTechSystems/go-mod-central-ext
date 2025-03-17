@@ -146,3 +146,9 @@ const (
 	Mutation     = "MUTATION"
 	Subscription = "SUBSCRIPTION"
 )
+
+// Constants related for filter
+const (
+	OUT = "OUT"
+	IN  = "IN"
+)
