@@ -42,6 +42,11 @@ const (
 
 	ApiKeyRoute                     = edgexCommon.ApiBase + "/key"
 	ApiVerificationKeyByIssuerRoute = ApiKeyRoute + "/" + VerificationKeyType + "/" + Issuer + "/:" + Issuer
+
+	ApiFilterRoute           = edgexCommon.ApiBase + "/filter"
+	ApiFilterIdRoute         = ApiFilterRoute + "/" + edgexCommon.Id + "/:" + edgexCommon.Id
+	ApiFilterDeviceNameRoute = ApiFilterRoute + "/" + edgexCommon.DeviceName + "/:" + edgexCommon.DeviceName
+	ApiAllFilterRoute        = ApiFilterRoute + "/" + edgexCommon.All
 )
 
 // constants relate to header names
