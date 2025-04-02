@@ -2,8 +2,10 @@ module github.com/IOTechSystems/go-mod-central-ext/v4
 
 go 1.23.0
 
+toolchain go1.24.1
+
 require (
-	github.com/edgexfoundry/go-mod-core-contracts/v4 v4.1.0-dev.1
+	github.com/edgexfoundry/go-mod-core-contracts/v4 v4.1.0-dev.3
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.10.0
