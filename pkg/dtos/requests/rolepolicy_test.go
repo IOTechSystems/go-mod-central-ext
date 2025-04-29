@@ -34,8 +34,10 @@ var (
 	}
 	mockRolePolicyDTO = dtos.RolePolicy{
 		Role:           mockRole,
-		Description:    mockDescription,
 		AccessPolicies: []dtos.AccessPolicy{mockAccessPolicyDTO},
+		RolePolicyBasicInfo: dtos.RolePolicyBasicInfo{
+			Description: mockDescription,
+		},
 	}
 	testAddRolePolicyRequest = AddRolePolicyRequest{
 		BaseRequest: dtoCommon.BaseRequest{
@@ -158,8 +160,10 @@ func Test_AddRolePolicyReqToRolePolicyModels(t *testing.T) {
 	expectedRoleModels := []models.RolePolicy{
 		{
 			Role:           mockRole,
-			Description:    mockDescription,
 			AccessPolicies: []models.AccessPolicy{mockAccessPolicyModel},
+			RolePolicyBasicInfo: models.RolePolicyBasicInfo{
+				Description: mockDescription,
+			},
 		},
 	}
 	resultModels := AddRolePolicyReqToRolePolicyModels(requests)
