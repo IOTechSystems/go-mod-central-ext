@@ -5,14 +5,36 @@ package dtos
 import (
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/models"
 	edgexDtos "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos"
+	edgexModels "github.com/edgexfoundry/go-mod-core-contracts/v4/models"
 )
 
 type RolePolicy struct {
-	edgexDtos.DBTimestamp
 	Id             string         `json:"id,omitempty"`
 	Role           string         `json:"role" validate:"required,edgex-dto-none-empty-string"`
-	Description    string         `json:"description,omitempty"`
 	AccessPolicies []AccessPolicy `json:"accessPolicies" validate:"gt=0,dive,required"`
+	RolePolicyBasicInfo
+}
+
+// RolePolicyBasicInfo includes additional fields that provide descriptive information about a role policy.
+type RolePolicyBasicInfo struct {
+	edgexDtos.DBTimestamp
+	Description string `json:"description,omitempty"`
+}
+
+// ToRolePolicyBasicInfoModel transforms the RolePolicy DTO to the RolePolicy Model
+func ToRolePolicyBasicInfoModel(rolePolicyBasicInfo RolePolicyBasicInfo) models.RolePolicyBasicInfo {
+	return models.RolePolicyBasicInfo{
+		DBTimestamp: edgexModels.DBTimestamp(rolePolicyBasicInfo.DBTimestamp),
+		Description: rolePolicyBasicInfo.Description,
+	}
+}
+
+// FromRolePolicyBasicInfoModelToDTO transforms the RolePolicyBasicInfo model to the RolePolicyBasicInfo DTO
+func FromRolePolicyBasicInfoModelToDTO(m models.RolePolicyBasicInfo) RolePolicyBasicInfo {
+	return RolePolicyBasicInfo{
+		DBTimestamp: edgexDtos.DBTimestamp(m.DBTimestamp),
+		Description: m.Description,
+	}
 }
 
 type AccessPolicy struct {
@@ -33,21 +55,20 @@ type AccessPolicy struct {
 // ToRolePolicyModel transforms the RolePolicy DTO to the RolePolicy Model
 func ToRolePolicyModel(rolePolicy RolePolicy) models.RolePolicy {
 	return models.RolePolicy{
-		Id:             rolePolicy.Id,
-		Role:           rolePolicy.Role,
-		Description:    rolePolicy.Description,
-		AccessPolicies: ToAccessPolicyModels(rolePolicy.AccessPolicies),
+		Id:                  rolePolicy.Id,
+		Role:                rolePolicy.Role,
+		AccessPolicies:      ToAccessPolicyModels(rolePolicy.AccessPolicies),
+		RolePolicyBasicInfo: ToRolePolicyBasicInfoModel(rolePolicy.RolePolicyBasicInfo),
 	}
 }
 
 // FromRolePolicyModelToDTO transforms the RolePolicy model to the RolePolicy DTO
 func FromRolePolicyModelToDTO(r models.RolePolicy) RolePolicy {
 	return RolePolicy{
-		DBTimestamp:    edgexDtos.DBTimestamp(r.DBTimestamp),
-		Id:             r.Id,
-		Role:           r.Role,
-		Description:    r.Description,
-		AccessPolicies: FromAccessPolicyModelsToDTOs(r.AccessPolicies),
+		Id:                  r.Id,
+		Role:                r.Role,
+		AccessPolicies:      FromAccessPolicyModelsToDTOs(r.AccessPolicies),
+		RolePolicyBasicInfo: FromRolePolicyBasicInfoModelToDTO(r.RolePolicyBasicInfo),
 	}
 }
 

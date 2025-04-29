@@ -7,11 +7,16 @@ import (
 )
 
 type RolePolicy struct {
-	edgexModels.DBTimestamp
 	Id             string
 	Role           string
-	Description    string
 	AccessPolicies []AccessPolicy
+	RolePolicyBasicInfo
+}
+
+// RolePolicyBasicInfo includes additional fields that provide descriptive information about a role policy. When stored in the Casbin database tables, an instance of RolePolicyBasicInfo is encoded as a base64 string.
+type RolePolicyBasicInfo struct {
+	edgexModels.DBTimestamp
+	Description string
 }
 
 type AccessPolicy struct {
