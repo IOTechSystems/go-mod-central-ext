@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2024 IOTech Ltd
+// Copyright (C) 2023-2025 IOTech Ltd
 
 package xlsx
 
@@ -83,6 +83,59 @@ func Test_setStdStructFieldValue(t *testing.T) {
 			} else {
 				require.NoError(t, err, "Unexpected error occurred")
 
+			}
+		})
+	}
+}
+
+func Test_setStdStructFieldValue_ptr_field(t *testing.T) {
+	rowElement := reflect.New(reflect.TypeOf(edgexDtos.ResourceProperties{})).Elem()
+
+	tests := []struct {
+		name        string
+		cellValue   string
+		fieldName   string
+		expectError bool
+	}{
+		{"setStdStructFieldValue_ptr_field - success to parse a cell to a pointer field", "0.9", "Minimum", false},
+		{"setStdStructFieldValue_ptr_field - success to parse empty cell to a pointer field", "", "Scale", false},
+		{"setStdStructFieldValue_ptr_field - fail to parse float number to a uint64 pointer field", "1.25", "Mask", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			field := rowElement.FieldByName(tt.fieldName)
+			err := setStdStructFieldValue(tt.cellValue, field)
+			if tt.expectError {
+				require.Error(t, err, "Expected cell conversion error not occurred")
+			} else {
+				require.NoError(t, err, "Unexpected error occurred")
+			}
+		})
+	}
+}
+
+func TestParseCellToField(t *testing.T) {
+
+	tests := []struct {
+		name        string
+		cellValue   string
+		kind        reflect.Kind
+		expectValue any
+		expectError bool
+	}{
+		{"success to parse a cell to float32 field", "0.9", reflect.Float32, float32(0.9), false},
+		{"success to parse a cell to int64 field", "54321", reflect.Int64, int64(54321), false},
+		{"success to parse a cell to uint32 field", "12345678", reflect.Uint32, uint32(12345678), false},
+		{"fail to parse a cell to a unhandled type field", "12345678", reflect.Chan, "", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			value, err := parseCellToField(tt.cellValue, tt.kind)
+			if tt.expectError {
+				require.Error(t, err, "Expected cell conversion error not occurred")
+			} else {
+				require.Equal(t, tt.expectValue, value)
+				require.NoError(t, err, "Unexpected error occurred")
 			}
 		})
 	}

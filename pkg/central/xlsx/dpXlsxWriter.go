@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2025 IOTech Ltd
 //
 
 package xlsx
@@ -114,6 +114,11 @@ func (dpWriter *dpXlsxWriter) convertDeviceInfo() errors.EdgeX {
 	profile := dpWriter.deviceProfile
 	for i, cell := range cols[0] {
 		var value string
+		cell = strings.TrimSpace(cell)
+		if cell == "" {
+			continue
+		}
+
 		switch strings.ToLower(cell) {
 		case strings.ToLower(apiVersion):
 			value = edgexCommon.ApiVersion
@@ -158,6 +163,7 @@ func (dpWriter *dpXlsxWriter) convertDeviceResources() errors.EdgeX {
 	resources := dpWriter.deviceProfile.DeviceResources
 	for resIndex, res := range resources {
 		for colIndex, headerCell := range headerRow {
+			headerCell = strings.TrimSpace(headerCell)
 			if headerCell == "" {
 				continue
 			}
@@ -289,6 +295,7 @@ OUTER:
 		var cell any
 
 		for colIndex, headerCell := range headerCol {
+			headerCell = strings.TrimSpace(headerCell)
 			if headerCell == "" {
 				continue
 			}
@@ -300,8 +307,7 @@ OUTER:
 				cell = cmd.IsHidden
 			case strings.ToLower(readWrite):
 				cell = cmd.ReadWrite
-			case strings.ToLower(edgexCommon.ResourceName):
-			case strings.ToLower(resourceOperation):
+			case strings.ToLower(edgexCommon.ResourceName), strings.ToLower(resourceOperation):
 				edgexErr := dpWriter.setResourceNameCells(colIndex, cmdIndex, cmd.ResourceOperations)
 				if err != nil {
 					return errors.NewCommonEdgeXWrapper(edgexErr)

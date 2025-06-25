@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2024 IOTech Ltd
+// Copyright (C) 2023-2025 IOTech Ltd
 
 package xlsx
 
@@ -64,7 +64,41 @@ func getStructFieldByHeader(structEle *reflect.Value, colIndex int, headerCol []
 // setStdStructFieldValue set the struct field with Go standard types to the xlsx cell value
 func setStdStructFieldValue(originValue string, field reflect.Value) errors.EdgeX {
 	var fieldValue any
-	switch field.Kind() {
+	var err errors.EdgeX
+
+	// Handle the struct pointer field
+	if field.Kind() == reflect.Ptr {
+		if originValue == "" {
+			return nil
+		}
+
+		fieldValue, err = parseCellToField(originValue, field.Type().Elem().Kind())
+		if err != nil {
+			return errors.NewCommonEdgeXWrapper(err)
+		}
+
+		// Create a new pointer field based on the primitive data type
+		ptrValue := reflect.New(field.Type().Elem())
+		// Set value to the pointer
+		ptrValue.Elem().Set(reflect.ValueOf(fieldValue))
+		// Set the struct field to the pointer value
+		field.Set(ptrValue)
+	} else {
+		fieldValue, err = parseCellToField(originValue, field.Kind())
+		if err != nil {
+			return errors.NewCommonEdgeXWrapper(err)
+		}
+		field.Set(reflect.ValueOf(fieldValue))
+	}
+
+	return nil
+}
+
+// parseCellToField parses the xlsx cell string to the Go primitive type value based on the data type
+func parseCellToField(originValue string, kind reflect.Kind) (any, errors.EdgeX) {
+	var fieldValue any
+
+	switch kind {
 	case reflect.String:
 		fieldValue = originValue
 	case reflect.Slice:
@@ -73,23 +107,52 @@ func setStdStructFieldValue(originValue string, field reflect.Value) errors.Edge
 	case reflect.Bool:
 		boolValue, err := strconv.ParseBool(originValue)
 		if err != nil {
-			return errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("failed to parse originValue '%v' to bool type", originValue), err)
+			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("failed to parse originValue '%v' to bool type", originValue), err)
 		}
 		fieldValue = boolValue
+	case reflect.Int32:
+		intValue, err := strconv.ParseInt(originValue, 10, 32)
+		if err != nil {
+			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("failed to parse originValue '%v' to Int32 type", originValue), err)
+		}
+		fieldValue = int32(intValue)
 	case reflect.Int64:
 		int64Value, err := strconv.ParseInt(originValue, 10, 64)
 		if err != nil {
-			return errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("failed to parse originValue '%v' to Int64 type", originValue), err)
+			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("failed to parse originValue '%v' to Int64 type", originValue), err)
 		}
 		fieldValue = int64Value
+	case reflect.Float32:
+		floatValue, err := strconv.ParseFloat(originValue, 32)
+		if err != nil {
+			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("failed to parse originValue '%v' to Float32 type", originValue), err)
+		}
+		fieldValue = float32(floatValue)
+	case reflect.Float64:
+		floatValue, err := strconv.ParseFloat(originValue, 64)
+		if err != nil {
+			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("failed to parse originValue '%v' to Float64 type", originValue), err)
+		}
+		fieldValue = floatValue
+	case reflect.Uint32:
+		uintValue, err := strconv.ParseUint(originValue, 10, 32)
+		if err != nil {
+			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("failed to parse originValue '%v' to Uint32 type", originValue), err)
+		}
+		fieldValue = uint32(uintValue)
+	case reflect.Uint64:
+		uintValue, err := strconv.ParseUint(originValue, 10, 64)
+		if err != nil {
+			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("failed to parse originValue '%v' to Uint64 type", originValue), err)
+		}
+		fieldValue = uintValue
 	case reflect.Interface:
 		fieldValue = originValue
 	default:
-		return errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("failed to parse originValue '%v' to %s type", originValue, field.Type()), nil)
+		return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("failed to parse originValue '%v' to %s type", originValue, kind), nil)
 	}
 
-	field.Set(reflect.ValueOf(fieldValue))
-	return nil
+	return fieldValue, nil
 }
 
 // convertDTOStdTypeFields unmarshalls the xlsx cells into the standard type fields of the DTO struct
