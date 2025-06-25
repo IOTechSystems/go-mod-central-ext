@@ -122,8 +122,6 @@ func parseCellToField(originValue string, kind reflect.Kind) (any, errors.EdgeX)
 			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("failed to parse originValue '%v' to Int64 type", originValue), err)
 		}
 		fieldValue = int64Value
-	case reflect.Interface:
-		fieldValue = originValue
 	case reflect.Float32:
 		floatValue, err := strconv.ParseFloat(originValue, 32)
 		if err != nil {
@@ -148,6 +146,8 @@ func parseCellToField(originValue string, kind reflect.Kind) (any, errors.EdgeX)
 			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("failed to parse originValue '%v' to Uint64 type", originValue), err)
 		}
 		fieldValue = uintValue
+	case reflect.Interface:
+		fieldValue = originValue
 	default:
 		return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("failed to parse originValue '%v' to %s type", originValue, kind), nil)
 	}
