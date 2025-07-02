@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/edgexfoundry/go-mod-core-contracts/v4 v4.1.0-dev.6
-	github.com/go-playground/validator/v10 v10.26.0
+	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.10.0
 	github.com/xuri/excelize/v2 v2.9.0
