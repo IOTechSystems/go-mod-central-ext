@@ -9,21 +9,25 @@ import (
 )
 
 type Filter struct {
-	Id              string `json:"id"`
-	Type            string `json:"type" validate:"required,oneof=IN OUT"`
-	DeviceName      string `json:"deviceName" validate:"required,edgex-dto-none-empty-string"`
-	EventSourceName string `json:"eventSourceName"`
-	ResourceName    string `json:"resourceName"`
+	Id                string  `json:"id"`
+	Type              string  `json:"type" validate:"required,oneof=IN OUT"`
+	DeviceName        string  `json:"deviceName" validate:"required,edgex-dto-none-empty-string"`
+	EventSourceName   string  `json:"eventSourceName"`
+	ResourceName      string  `json:"resourceName"`
+	OnChange          bool    `json:"onChange" yaml:"onChange"`
+	OnChangeThreshold float64 `json:"onChangeThreshold" yaml:"onChangeThreshold" validate:"gte=0"`
 }
 
 // ToFilterModel transforms the Filter DTO to the Filter Model
 func ToFilterModel(filter Filter) models.Filter {
 	return models.Filter{
-		Id:              filter.Id,
-		Type:            strings.ToUpper(filter.Type),
-		DeviceName:      filter.DeviceName,
-		EventSourceName: filter.EventSourceName,
-		ResourceName:    filter.ResourceName,
+		Id:                filter.Id,
+		Type:              strings.ToUpper(filter.Type),
+		DeviceName:        filter.DeviceName,
+		EventSourceName:   filter.EventSourceName,
+		ResourceName:      filter.ResourceName,
+		OnChange:          filter.OnChange,
+		OnChangeThreshold: filter.OnChangeThreshold,
 	}
 }
 
@@ -38,10 +42,12 @@ type UpdateFilter struct {
 // FromFilterModelToDTO transforms the Filter Model to the Filter DTO
 func FromFilterModelToDTO(filter models.Filter) Filter {
 	return Filter{
-		Id:              filter.Id,
-		Type:            filter.Type,
-		DeviceName:      filter.DeviceName,
-		EventSourceName: filter.EventSourceName,
-		ResourceName:    filter.ResourceName,
+		Id:                filter.Id,
+		Type:              filter.Type,
+		DeviceName:        filter.DeviceName,
+		EventSourceName:   filter.EventSourceName,
+		ResourceName:      filter.ResourceName,
+		OnChange:          filter.OnChange,
+		OnChangeThreshold: filter.OnChangeThreshold,
 	}
 }
