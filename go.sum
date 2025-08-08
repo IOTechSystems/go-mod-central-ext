@@ -1,8 +1,8 @@
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/edgexfoundry/go-mod-core-contracts/v4 v4.1.0-dev.9 h1:anieTstsfil2HZr0OtVt+k4CWDwsbY1VhYl2tEIuYaQ=
-github.com/edgexfoundry/go-mod-core-contracts/v4 v4.1.0-dev.9/go.mod h1:amP1pD+VT+LkOJ5nryqYubgeBWBJTnqsq5sA/uKIyo0=
+github.com/edgexfoundry/go-mod-core-contracts/v4 v4.1.0-dev.11 h1:k1vCldLjiug1ox+0laeJbVZ+gyR3G9HnMuF8QHVvfgg=
+github.com/edgexfoundry/go-mod-core-contracts/v4 v4.1.0-dev.11/go.mod h1:amP1pD+VT+LkOJ5nryqYubgeBWBJTnqsq5sA/uKIyo0=
 github.com/fxamacker/cbor/v2 v2.9.0 h1:NpKPmjDBgUfBms6tr6JZkTHtfFGcMKsw3eGcmD/sapM=
 github.com/fxamacker/cbor/v2 v2.9.0/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/gabriel-vasile/mimetype v1.4.8 h1:FfZ3gj38NjllZIeJAmMhr+qKL8Wu+nOoI3GqacKw1NM=
