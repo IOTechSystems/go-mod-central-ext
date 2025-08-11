@@ -6,9 +6,12 @@ import (
 	"strings"
 
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/models"
+
+	edgexDtos "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos"
 )
 
 type Filter struct {
+	edgexDtos.DBTimestamp
 	Id                string  `json:"id"`
 	Type              string  `json:"type" validate:"required,oneof=IN OUT"`
 	DeviceName        string  `json:"deviceName" validate:"required,edgex-dto-none-empty-string"`
@@ -32,6 +35,7 @@ func ToFilterModel(filter Filter) models.Filter {
 }
 
 type UpdateFilter struct {
+	edgexDtos.DBTimestamp
 	Id              string `json:"id" validate:"required,edgex-dto-none-empty-string"`
 	Type            string `json:"type" validate:"required,edgex-dto-none-empty-string"`
 	DeviceName      string `json:"deviceName" validate:"required,edgex-dto-none-empty-string"`
@@ -42,6 +46,7 @@ type UpdateFilter struct {
 // FromFilterModelToDTO transforms the Filter Model to the Filter DTO
 func FromFilterModelToDTO(filter models.Filter) Filter {
 	return Filter{
+		DBTimestamp:       edgexDtos.DBTimestamp(filter.DBTimestamp),
 		Id:                filter.Id,
 		Type:              filter.Type,
 		DeviceName:        filter.DeviceName,
