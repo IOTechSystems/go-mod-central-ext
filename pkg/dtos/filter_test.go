@@ -44,7 +44,11 @@ func TestToFilterModel(t *testing.T) {
 
 func TestFromFilterModelToDTO(t *testing.T) {
 	filterModel := testFilterModel
+	filterModel.Created = createdTimestamp
+	filterModel.Modified = modifiedTimestamp
 	expectedFilterDTO := testFilterDTO
+	expectedFilterDTO.Created = createdTimestamp
+	expectedFilterDTO.Modified = modifiedTimestamp
 	actualFilterDTO := FromFilterModelToDTO(filterModel)
 	require.Equal(t, expectedFilterDTO, actualFilterDTO)
 }
