@@ -47,6 +47,10 @@ const (
 	ApiFilterIdRoute         = ApiFilterRoute + "/" + edgexCommon.Id + "/:" + edgexCommon.Id
 	ApiFilterDeviceNameRoute = ApiFilterRoute + "/" + edgexCommon.DeviceName + "/:" + edgexCommon.DeviceName
 	ApiAllFilterRoute        = ApiFilterRoute + "/" + edgexCommon.All
+
+	ApiRetentionPolicyRoute     = edgexCommon.ApiBase + "/retentionpolicy"
+	ApiRetentionPolicyByIdRoute = ApiRetentionPolicyRoute + "/" + edgexCommon.Id + "/:" + edgexCommon.Id
+	ApiAllRetentionPolicyRoute  = ApiRetentionPolicyRoute + "/" + edgexCommon.All
 )
 
 // constants relate to header names
