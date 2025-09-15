@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2024 IOTech Ltd
+// Copyright (C) 2022-2025 IOTech Ltd
 
 package xrtmodels
 
@@ -13,6 +13,8 @@ import (
 	edgexCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/common"
 	edgexDtos "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"
+
+	"github.com/spf13/cast"
 )
 
 func toEdgeXProperties(protocol string, protocolProperties map[string]any) map[string]string {
@@ -20,7 +22,7 @@ func toEdgeXProperties(protocol string, protocolProperties map[string]any) map[s
 
 	edgexProperties := make(map[string]string)
 	for k, v := range protocolProperties {
-		edgexProperties[k] = fmt.Sprintf("%v", v)
+		edgexProperties[k] = cast.ToString(v)
 	}
 
 	for _, p := range intProperties {
@@ -50,7 +52,7 @@ func toEdgeXProperties(protocol string, protocolProperties map[string]any) map[s
 	for _, p := range boolProperties {
 		propertyValue, ok := protocolProperties[p]
 		if ok {
-			edgexProperties[p] = fmt.Sprintf("%v", propertyValue)
+			edgexProperties[p] = cast.ToString(propertyValue)
 		}
 	}
 	return edgexProperties
