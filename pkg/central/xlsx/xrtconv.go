@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2025 IOTech Ltd
 
 package xlsx
 
@@ -8,6 +8,8 @@ import (
 
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/xrtmodels"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"
+
+	"github.com/spf13/cast"
 )
 
 // toXrtProperties converts the protocol properties to specified data type when importing devices by excel file
@@ -18,7 +20,7 @@ func toXrtProperties(protocol string, protocolProperties map[string]interface{})
 		propertyValue, ok := protocolProperties[p]
 		if ok {
 			// convert property value from interface{} to string, then to int
-			val, err := strconv.Atoi(fmt.Sprintf("%v", propertyValue))
+			val, err := strconv.Atoi(cast.ToString(propertyValue))
 			if err != nil {
 				return errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("fail to convert %v to int", p), err)
 			}
@@ -30,7 +32,7 @@ func toXrtProperties(protocol string, protocolProperties map[string]interface{})
 		propertyValue, ok := protocolProperties[p]
 		if ok {
 			// convert property value from interface{} to string, then to float
-			val, err := strconv.ParseFloat(fmt.Sprintf("%v", propertyValue), 64)
+			val, err := strconv.ParseFloat(cast.ToString(propertyValue), 64)
 			if err != nil {
 				return errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("fail to convert %v to float", p), err)
 			}
@@ -42,7 +44,7 @@ func toXrtProperties(protocol string, protocolProperties map[string]interface{})
 		propertyValue, ok := protocolProperties[p]
 		if ok {
 			// convert property value from interface{} to string, then to bool
-			val, err := strconv.ParseBool(fmt.Sprintf("%v", propertyValue))
+			val, err := strconv.ParseBool(cast.ToString(propertyValue))
 			if err != nil {
 				return errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("fail to convert %v to bool", p), err)
 			}
