@@ -1,7 +1,7 @@
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/edgexfoundry/go-mod-core-contracts/v4 v4.1.0-dev.19 h1:gVJb+t3Z0nFJQPw66uZJwHJzKLd39dGXPfJQgCMzfZY=
-github.com/edgexfoundry/go-mod-core-contracts/v4 v4.1.0-dev.19/go.mod h1:yfCGY4GWRYPD3di+UqZVnb2Ol2+ZNpp3Jxru9B01QAg=
+github.com/edgexfoundry/go-mod-core-contracts/v4 v4.1.0-dev.20 h1:59z9QBSnCgwYK28/6EU9E3j9Kd0FmokHaNzezq/0fUY=
+github.com/edgexfoundry/go-mod-core-contracts/v4 v4.1.0-dev.20/go.mod h1:yfCGY4GWRYPD3di+UqZVnb2Ol2+ZNpp3Jxru9B01QAg=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=
 github.com/frankban/quicktest v1.14.6/go.mod h1:4ptaffx2x8+WTWXmUCuVU6aPUX1/Mz7zb5vbUoiM6w0=
 github.com/fxamacker/cbor/v2 v2.9.0 h1:NpKPmjDBgUfBms6tr6JZkTHtfFGcMKsw3eGcmD/sapM=
