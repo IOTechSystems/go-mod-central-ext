@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 202-2025 IOTech Ltd
 
 package responses
 
@@ -26,7 +26,7 @@ type MultiUsersResponse struct {
 	Users                                []dtos.User `json:"users"`
 }
 
-func NewMultiUsersResponse(requestId string, message string, statusCode int, totalCount uint32, users []dtos.User) MultiUsersResponse {
+func NewMultiUsersResponse(requestId string, message string, statusCode int, totalCount int64, users []dtos.User) MultiUsersResponse {
 	return MultiUsersResponse{
 		BaseWithTotalCountResponse: dtoCommon.NewBaseWithTotalCountResponse(requestId, message, statusCode, totalCount),
 		Users:                      users,

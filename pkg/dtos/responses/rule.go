@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2024 IOTech Ltd
+// Copyright (C) 2023-2025 IOTech Ltd
 
 package responses
 
@@ -19,7 +19,7 @@ type MultiRulesResponse struct {
 	Rules                                []dtos.Rule `json:"rules"`
 }
 
-func NewMultiRulesResponse(requestId string, message string, statusCode int, totalCount uint32, rules []dtos.Rule) MultiRulesResponse {
+func NewMultiRulesResponse(requestId string, message string, statusCode int, totalCount int64, rules []dtos.Rule) MultiRulesResponse {
 	return MultiRulesResponse{
 		BaseWithTotalCountResponse: dtoCommon.NewBaseWithTotalCountResponse(requestId, message, statusCode, totalCount),
 		Rules:                      rules,

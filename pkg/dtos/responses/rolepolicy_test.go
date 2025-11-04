@@ -30,7 +30,7 @@ func TestNewMultiRolePolicyResponse(t *testing.T) {
 		{Role: mockRole1},
 		{Role: mockRole2},
 	}
-	expectedTotalCount := uint32(2)
+	expectedTotalCount := int64(2)
 	actual := NewMultiRolePolicyResponse(common.ExpectedRequestId, common.ExpectedMessage, common.ExpectedStatusCode, expectedTotalCount, expectedRolePolicies)
 
 	require.Equal(t, common.ExpectedRequestId, actual.RequestId)

@@ -24,12 +24,12 @@ func TransformProfileFromV2ToV3(v2Profile v2dtos.DeviceProfile) (edgexDtos.Devic
 	profile := edgexDtos.DeviceProfile{
 		DeviceProfileBasicInfo: edgexDtos.DeviceProfileBasicInfo{
 			DBTimestamp:  edgexDtos.DBTimestamp(v2Profile.DBTimestamp),
-			Id:           v2Profile.DeviceProfileBasicInfo.Id,
-			Name:         v2Profile.DeviceProfileBasicInfo.Name,
-			Manufacturer: v2Profile.DeviceProfileBasicInfo.Manufacturer,
-			Description:  v2Profile.DeviceProfileBasicInfo.Description,
-			Model:        v2Profile.DeviceProfileBasicInfo.Model,
-			Labels:       v2Profile.DeviceProfileBasicInfo.Labels,
+			Id:           v2Profile.Id,
+			Name:         v2Profile.Name,
+			Manufacturer: v2Profile.Manufacturer,
+			Description:  v2Profile.Description,
+			Model:        v2Profile.Model,
+			Labels:       v2Profile.Labels,
 		},
 		DeviceResources: resources,
 		DeviceCommands:  transformCommandFromV2ToV3(v2Profile.DeviceCommands),
