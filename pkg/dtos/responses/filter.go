@@ -26,7 +26,7 @@ type MultiFiltersResponse struct {
 	Filters                              []dtos.Filter `json:"filters"`
 }
 
-func NewMultiFiltersResponse(requestId string, message string, statusCode int, totalCount uint32, filters []dtos.Filter) MultiFiltersResponse {
+func NewMultiFiltersResponse(requestId string, message string, statusCode int, totalCount int64, filters []dtos.Filter) MultiFiltersResponse {
 	return MultiFiltersResponse{
 		BaseWithTotalCountResponse: dtoCommon.NewBaseWithTotalCountResponse(requestId, message, statusCode, totalCount),
 		Filters:                    filters,

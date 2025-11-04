@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2024 IOTech Ltd
+// Copyright (C) 2023-2025 IOTech Ltd
 
 package xlsx
 
@@ -81,7 +81,7 @@ func (dpXlsx *deviceProfileXlsx) ConvertToDTO() errors.EdgeX {
 	// validate the device profile DTO
 	err := convertedProfile.Validate()
 	if err != nil {
-		dpXlsx.validateErrors[validateErrProfilePrefix+convertedProfile.DeviceProfileBasicInfo.Name] = err
+		dpXlsx.validateErrors[validateErrProfilePrefix+convertedProfile.Name] = err
 	} else if dpXlsx.validateErrors != nil {
 		dpXlsx.deviceProfile = convertedProfile
 	}

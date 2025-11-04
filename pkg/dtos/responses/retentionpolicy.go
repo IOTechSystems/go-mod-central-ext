@@ -27,7 +27,7 @@ type MultiRetentionPolicyResponse struct {
 	RetentionPolicies                    []dtos.RetentionPolicy `json:"retentionPolicies"`
 }
 
-func NewMultiRetentionPolicyResponse(requestId string, message string, statusCode int, totalCount uint32, rps []dtos.RetentionPolicy) MultiRetentionPolicyResponse {
+func NewMultiRetentionPolicyResponse(requestId string, message string, statusCode int, totalCount int64, rps []dtos.RetentionPolicy) MultiRetentionPolicyResponse {
 	return MultiRetentionPolicyResponse{
 		BaseWithTotalCountResponse: dtoCommon.NewBaseWithTotalCountResponse(requestId, message, statusCode, totalCount),
 		RetentionPolicies:          rps,

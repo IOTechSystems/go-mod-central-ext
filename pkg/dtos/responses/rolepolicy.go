@@ -26,7 +26,7 @@ type MultiRolePolicyResponse struct {
 	RolePolicies                         []dtos.RolePolicy `json:"rolePolicies"`
 }
 
-func NewMultiRolePolicyResponse(requestId string, message string, statusCode int, totalCount uint32, rolePolicies []dtos.RolePolicy) MultiRolePolicyResponse {
+func NewMultiRolePolicyResponse(requestId string, message string, statusCode int, totalCount int64, rolePolicies []dtos.RolePolicy) MultiRolePolicyResponse {
 	return MultiRolePolicyResponse{
 		BaseWithTotalCountResponse: dtoCommon.NewBaseWithTotalCountResponse(requestId, message, statusCode, totalCount),
 		RolePolicies:               rolePolicies,

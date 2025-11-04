@@ -37,7 +37,7 @@ func TestNewRetentionPolicyResponse(t *testing.T) {
 
 func TestNewMultiRetentionPolicyResponse(t *testing.T) {
 	expectedPolicies := []dtos.RetentionPolicy{testRetentionPolicy1, testRetentionPolicy2}
-	expectedTotalCount := uint32(2)
+	expectedTotalCount := int64(2)
 	actual := NewMultiRetentionPolicyResponse(common.ExpectedRequestId, common.ExpectedMessage, common.ExpectedStatusCode, expectedTotalCount, expectedPolicies)
 
 	require.Equal(t, common.ExpectedRequestId, actual.RequestId)

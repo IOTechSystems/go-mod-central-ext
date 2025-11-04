@@ -1,14 +1,15 @@
-// Copyright (C) 2021-2024 IOTech Ltd
+// Copyright (C) 2021-2025 IOTech Ltd
 
 package http
 
 import (
 	"context"
 	"encoding/json"
-	"github.com/edgexfoundry/go-mod-core-contracts/v4/clients/interfaces"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/edgexfoundry/go-mod-core-contracts/v4/clients/interfaces"
 
 	"github.com/stretchr/testify/require"
 
@@ -44,12 +45,12 @@ func NewNullAuthenticationInjector() interfaces.AuthenticationInjector {
 	return &emptyAuthenticationInjector{}
 }
 
-func (_ *emptyAuthenticationInjector) AddAuthenticationData(_ *http.Request) error {
+func (*emptyAuthenticationInjector) AddAuthenticationData(_ *http.Request) error {
 	// Do nothing to the request; used for unit tests
 	return nil
 }
 
-func (_ *emptyAuthenticationInjector) RoundTripper() http.RoundTripper {
+func (*emptyAuthenticationInjector) RoundTripper() http.RoundTripper {
 	// Do nothing to the request; used for unit tests
 	return nil
 }

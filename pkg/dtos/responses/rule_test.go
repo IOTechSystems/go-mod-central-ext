@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2024 IOTech Ltd
+// Copyright (C) 2023-2025 IOTech Ltd
 
 package responses
 
@@ -6,8 +6,9 @@ import (
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/common"
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/dtos"
 
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewMultiRulesResponse(t *testing.T) {
@@ -15,7 +16,7 @@ func TestNewMultiRulesResponse(t *testing.T) {
 		{Name: "rule1", Rule: []byte("rule1")},
 		{Name: "rule2", Rule: []byte("rule2")},
 	}
-	expectedTotalCount := uint32(len(expectedRules))
+	expectedTotalCount := int64(len(expectedRules))
 	actual := NewMultiRulesResponse(common.ExpectedRequestId, common.ExpectedMessage, common.ExpectedStatusCode, expectedTotalCount, expectedRules)
 	assert.Equal(t, common.ExpectedRequestId, actual.RequestId)
 	assert.Equal(t, common.ExpectedStatusCode, actual.StatusCode)

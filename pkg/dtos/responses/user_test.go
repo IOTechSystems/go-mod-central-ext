@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2025 IOTech Ltd
 
 package responses
 
@@ -31,7 +31,7 @@ func TestNewMultiUsersResponse(t *testing.T) {
 		{Name: testUsername},
 		{Name: testUsername2},
 	}
-	expectedTotalCount := uint32(2)
+	expectedTotalCount := int64(2)
 	actual := NewMultiUsersResponse(common.ExpectedRequestId, common.ExpectedMessage, common.ExpectedStatusCode, expectedTotalCount, expectedUsers)
 
 	require.Equal(t, common.ExpectedRequestId, actual.RequestId)

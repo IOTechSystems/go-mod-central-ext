@@ -2,6 +2,7 @@
 // This compile.go was copied from https://github.com/einride/can-go because it is not exported.
 //
 
+//nolint:all // copied from external project
 package dbc
 
 import (

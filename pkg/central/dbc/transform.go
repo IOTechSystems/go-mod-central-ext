@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2024 IOTech Ltd
+// Copyright (C) 2023-2025 IOTech Ltd
 
 package dbc
 
@@ -27,7 +27,7 @@ func valueType(s *descriptor.Signal) string {
 	}
 }
 
-func ConvertDBCtoProfile(data []byte) (profileDTOs []edgexDtos.DeviceProfile, err error, validateErrors map[string]error) {
+func ConvertDBCtoProfile(data []byte) (profileDTOs []edgexDtos.DeviceProfile, err error, validateErrors map[string]error) { //nolint:staticcheck // reason: we intentionally return error not as last arg for clarity
 	compileResult, err := Compile("", data)
 	if err != nil {
 		return
@@ -98,7 +98,7 @@ func ConvertDBCtoProfile(data []byte) (profileDTOs []edgexDtos.DeviceProfile, er
 	return
 }
 
-func ConvertDBCtoDevice(data []byte, args map[string]string) (deviceDTOs []edgexDtos.Device, err error, validateErrors map[string]error) {
+func ConvertDBCtoDevice(data []byte, args map[string]string) (deviceDTOs []edgexDtos.Device, err error, validateErrors map[string]error) { //nolint:staticcheck // reason: we intentionally return error not as last arg for clarity
 	compileResult, err := Compile("", data)
 	if err != nil {
 		return
