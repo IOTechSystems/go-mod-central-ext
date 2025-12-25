@@ -3,8 +3,8 @@ module github.com/IOTechSystems/go-mod-central-ext/v4
 go 1.25.0
 
 require (
-	github.com/edgexfoundry/go-mod-core-contracts/v4 v4.1.0-dev.24
-	github.com/go-playground/validator/v10 v10.30.0
+	github.com/edgexfoundry/go-mod-core-contracts/v4 v4.1.0-dev.25
+	github.com/go-playground/validator/v10 v10.30.1
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cast v1.10.0
 	github.com/stretchr/testify v1.11.1
