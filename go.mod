@@ -8,6 +8,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cast v1.10.0
 	github.com/stretchr/testify v1.11.1
+	github.com/vmihailenco/msgpack/v5 v5.4.1
 	github.com/xuri/excelize/v2 v2.9.0
 	go.einride.tech/can v0.16.1
 	google.golang.org/protobuf v1.36.11
@@ -26,6 +27,7 @@ require (
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.4 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.1 // indirect
