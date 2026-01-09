@@ -1,0 +1,85 @@
+// Copyright (C) 2026 IOTech Ltd
+//
+// Protobuf schema for EdgeX Event encoding
+
+syntax = "proto3";
+
+package protobuf;
+
+option go_package = "github.com/IOTechSystems/go-mod-central-ext/v4/pkg/protobuf";
+
+// Event represents an EdgeX Event with one or more readings
+message Event {
+  // API version
+  string api_version = 1;
+
+  // Unique identifier for the event (UUID)
+  string id = 2;
+
+  // Name of the device from which the event originated
+  string device_name = 3;
+
+  // Name of the device profile from which the event originated
+  string profile_name = 4;
+
+  // Name of the source from which the event originated
+  string source_name = 5;
+
+  // Unix timestamp (nanoseconds) indicating when the event was originated
+  int64 origin = 6;
+
+  // One or more readings captured at the time of the event
+  repeated Reading readings = 7;
+
+  // Tags attached to the Event which give more context to the Event
+  // Entire tags map is stored as JSON-encoded bytes
+  bytes tags = 8;
+}
+
+// Reading represents a single reading within an Event
+message Reading {
+  // Unique identifier for the reading (UUID)
+  string id = 1;
+
+  // Unix timestamp (nanoseconds) indicating when the reading was originated at the source device
+  int64 origin = 2;
+
+  // Name of the device from which the reading originated
+  string device_name = 3;
+
+  // Device resource name for the reading
+  string resource_name = 4;
+
+  // Device profile name for the device
+  string profile_name = 5;
+
+  // Indicates the datatype of the value property
+  string value_type = 6;
+
+  // Units of measurement for the reading value
+  string units = 7;
+
+  // Tags attached to the reading
+  // Entire tags map is stored as JSON-encoded bytes
+  bytes tags = 8;
+
+  // For SimpleReading: string representation of the reading's value
+  string value = 9;
+
+  // For BinaryReading: binary value as bytes
+  bytes binary_value = 10;
+
+  // For BinaryReading: media type (e.g., MIME Type)
+  string media_type = 11;
+
+  // For ObjectReading: object value
+  // Entire object value is stored as MessagePack-encoded bytes
+  bytes object_value = 12;
+
+  // For NumericReading: numeric value
+  // Numeric value is stored as MessagePack-encoded bytes
+  bytes numeric_value = 13;
+
+  // Indicates if the reading value is null
+  bool is_null = 14;
+}
