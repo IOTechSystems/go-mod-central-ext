@@ -8,6 +8,7 @@ import (
 
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/common"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/dtos"
+	dtoCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos/common"
 
 	"github.com/vmihailenco/msgpack/v5"
 	"google.golang.org/protobuf/proto"
@@ -102,13 +103,15 @@ func DecodeProtobufToEvent(data []byte) (*dtos.Event, error) {
 	}
 
 	event := &dtos.Event{
+		Versionable: dtoCommon.Versionable{
+			ApiVersion: pbEvent.GetApiVersion(),
+		},
 		Id:          pbEvent.GetId(),
 		DeviceName:  pbEvent.GetDeviceName(),
 		ProfileName: pbEvent.GetProfileName(),
 		SourceName:  pbEvent.GetSourceName(),
 		Origin:      pbEvent.GetOrigin(),
 	}
-	event.ApiVersion = pbEvent.GetApiVersion()
 
 	event.Readings = make([]dtos.BaseReading, len(pbEvent.GetReadings()))
 	for i, pbReading := range pbEvent.GetReadings() {
@@ -140,6 +143,26 @@ func convertProtobufToReading(pbReading *Reading) (dtos.BaseReading, error) {
 		Units:        pbReading.GetUnits(),
 	}
 
+	if len(pbReading.GetTags()) > 0 {
+		if err := json.Unmarshal(pbReading.GetTags(), &reading.Tags); err != nil {
+			return reading, fmt.Errorf("failed to unmarshal reading tags: %w", err)
+		}
+	}
+
+	if pbReading.GetIsNull() { // NullReading
+		nullReading := dtos.NewNullReading(
+			pbReading.GetProfileName(),
+			pbReading.GetDeviceName(),
+			pbReading.GetResourceName(),
+			pbReading.GetValueType(),
+		)
+		nullReading.Id = pbReading.GetId()
+		nullReading.Origin = pbReading.GetOrigin()
+		nullReading.Units = pbReading.GetUnits()
+		nullReading.Tags = reading.Tags
+		return nullReading, nil
+	}
+
 	switch pbReading.GetValueType() {
 	case common.ValueTypeBinary:
 		reading.BinaryReading = dtos.BinaryReading{
@@ -157,8 +180,7 @@ func convertProtobufToReading(pbReading *Reading) (dtos.BaseReading, error) {
 			}
 		}
 	default:
-		// SimpleReading or NumericReading
-		if len(pbReading.GetNumericValue()) > 0 {
+		if len(pbReading.GetNumericValue()) > 0 { // NumericReading
 			var numericValue any
 			if err := msgpack.Unmarshal(pbReading.GetNumericValue(), &numericValue); err != nil {
 				return reading, fmt.Errorf("failed to unmarshal numeric value: %w", err)
@@ -167,16 +189,10 @@ func convertProtobufToReading(pbReading *Reading) (dtos.BaseReading, error) {
 			reading.NumericReading = dtos.NumericReading{
 				NumericValue: numericValue,
 			}
-		} else if pbReading.GetValue() != "" {
+		} else { // SimpleReading
 			reading.SimpleReading = dtos.SimpleReading{
 				Value: pbReading.GetValue(),
 			}
-		}
-	}
-
-	if len(pbReading.GetTags()) > 0 {
-		if err := json.Unmarshal(pbReading.GetTags(), &reading.Tags); err != nil {
-			return reading, fmt.Errorf("failed to unmarshal reading tags: %w", err)
 		}
 	}
 
