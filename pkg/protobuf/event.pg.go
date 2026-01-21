@@ -6,7 +6,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.33.2
-// source: pkg/protobuf/event.proto
+// source: event.proto
 
 package protobuf
 
@@ -29,29 +29,29 @@ const (
 type Event struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// API version
-	ApiVersion string `protobuf:"bytes,1,opt,name=api_version,json=apiVersion,proto3" json:"api_version,omitempty"`
+	ApiVersion *string `protobuf:"bytes,1,opt,name=api_version,json=apiVersion,proto3,oneof" json:"api_version,omitempty"`
 	// Unique identifier for the event (UUID)
-	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Id *string `protobuf:"bytes,2,opt,name=id,proto3,oneof" json:"id,omitempty"`
 	// Name of the device from which the event originated
-	DeviceName string `protobuf:"bytes,3,opt,name=device_name,json=deviceName,proto3" json:"device_name,omitempty"`
+	DeviceName *string `protobuf:"bytes,3,opt,name=device_name,json=deviceName,proto3,oneof" json:"device_name,omitempty"`
 	// Name of the device profile from which the event originated
-	ProfileName string `protobuf:"bytes,4,opt,name=profile_name,json=profileName,proto3" json:"profile_name,omitempty"`
+	ProfileName *string `protobuf:"bytes,4,opt,name=profile_name,json=profileName,proto3,oneof" json:"profile_name,omitempty"`
 	// Name of the source from which the event originated
-	SourceName string `protobuf:"bytes,5,opt,name=source_name,json=sourceName,proto3" json:"source_name,omitempty"`
-	// Unix timestamp (nanoseconds) indicating when the event was originated at the source device
-	Origin int64 `protobuf:"varint,6,opt,name=origin,proto3" json:"origin,omitempty"`
-	// One or more readings captured at the time of the event
+	SourceName *string `protobuf:"bytes,5,opt,name=source_name,json=sourceName,proto3,oneof" json:"source_name,omitempty"`
+	// Unix timestamp (nanoseconds) indicating when the event was originated
+	Origin *int64 `protobuf:"varint,6,opt,name=origin,proto3,oneof" json:"origin,omitempty"`
+	// Zero or more readings captured at the time of the event
 	Readings []*Reading `protobuf:"bytes,7,rep,name=readings,proto3" json:"readings,omitempty"`
 	// Tags attached to the Event which give more context to the Event
 	// Entire tags map is stored as JSON-encoded bytes
-	Tags          []byte `protobuf:"bytes,8,opt,name=tags,proto3" json:"tags,omitempty"`
+	Tags          []byte `protobuf:"bytes,8,opt,name=tags,proto3,oneof" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Event) Reset() {
 	*x = Event{}
-	mi := &file_pkg_protobuf_event_proto_msgTypes[0]
+	mi := &file_event_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -63,7 +63,7 @@ func (x *Event) String() string {
 func (*Event) ProtoMessage() {}
 
 func (x *Event) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_protobuf_event_proto_msgTypes[0]
+	mi := &file_event_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -76,47 +76,47 @@ func (x *Event) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Event.ProtoReflect.Descriptor instead.
 func (*Event) Descriptor() ([]byte, []int) {
-	return file_pkg_protobuf_event_proto_rawDescGZIP(), []int{0}
+	return file_event_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Event) GetApiVersion() string {
-	if x != nil {
-		return x.ApiVersion
+	if x != nil && x.ApiVersion != nil {
+		return *x.ApiVersion
 	}
 	return ""
 }
 
 func (x *Event) GetId() string {
-	if x != nil {
-		return x.Id
+	if x != nil && x.Id != nil {
+		return *x.Id
 	}
 	return ""
 }
 
 func (x *Event) GetDeviceName() string {
-	if x != nil {
-		return x.DeviceName
+	if x != nil && x.DeviceName != nil {
+		return *x.DeviceName
 	}
 	return ""
 }
 
 func (x *Event) GetProfileName() string {
-	if x != nil {
-		return x.ProfileName
+	if x != nil && x.ProfileName != nil {
+		return *x.ProfileName
 	}
 	return ""
 }
 
 func (x *Event) GetSourceName() string {
-	if x != nil {
-		return x.SourceName
+	if x != nil && x.SourceName != nil {
+		return *x.SourceName
 	}
 	return ""
 }
 
 func (x *Event) GetOrigin() int64 {
-	if x != nil {
-		return x.Origin
+	if x != nil && x.Origin != nil {
+		return *x.Origin
 	}
 	return 0
 }
@@ -138,44 +138,44 @@ func (x *Event) GetTags() []byte {
 // Reading represents a single reading within an Event
 type Reading struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Unique identifier for the reading (UUID, optional)
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Unique identifier for the reading (UUID)
+	Id *string `protobuf:"bytes,1,opt,name=id,proto3,oneof" json:"id,omitempty"`
 	// Unix timestamp (nanoseconds) indicating when the reading was originated at the source device
-	Origin int64 `protobuf:"varint,2,opt,name=origin,proto3" json:"origin,omitempty"`
+	Origin *int64 `protobuf:"varint,2,opt,name=origin,proto3,oneof" json:"origin,omitempty"`
 	// Name of the device from which the reading originated
-	DeviceName string `protobuf:"bytes,3,opt,name=device_name,json=deviceName,proto3" json:"device_name,omitempty"`
+	DeviceName *string `protobuf:"bytes,3,opt,name=device_name,json=deviceName,proto3,oneof" json:"device_name,omitempty"`
 	// Device resource name for the reading
-	ResourceName string `protobuf:"bytes,4,opt,name=resource_name,json=resourceName,proto3" json:"resource_name,omitempty"`
-	// Device profile name for the reading
-	ProfileName string `protobuf:"bytes,5,opt,name=profile_name,json=profileName,proto3" json:"profile_name,omitempty"`
+	ResourceName *string `protobuf:"bytes,4,opt,name=resource_name,json=resourceName,proto3,oneof" json:"resource_name,omitempty"`
+	// Device profile name for the device
+	ProfileName *string `protobuf:"bytes,5,opt,name=profile_name,json=profileName,proto3,oneof" json:"profile_name,omitempty"`
 	// Indicates the datatype of the value property
-	ValueType string `protobuf:"bytes,6,opt,name=value_type,json=valueType,proto3" json:"value_type,omitempty"`
-	// Units of measurement for the reading value (optional)
-	Units string `protobuf:"bytes,7,opt,name=units,proto3" json:"units,omitempty"`
-	// Tags attached to the reading (optional)
+	ValueType *string `protobuf:"bytes,6,opt,name=value_type,json=valueType,proto3,oneof" json:"value_type,omitempty"`
+	// Units of measurement for the reading value
+	Units *string `protobuf:"bytes,7,opt,name=units,proto3,oneof" json:"units,omitempty"`
+	// Tags attached to the reading
 	// Entire tags map is stored as JSON-encoded bytes
-	Tags []byte `protobuf:"bytes,8,opt,name=tags,proto3" json:"tags,omitempty"`
+	Tags []byte `protobuf:"bytes,8,opt,name=tags,proto3,oneof" json:"tags,omitempty"`
 	// For SimpleReading: string representation of the reading's value
-	Value string `protobuf:"bytes,9,opt,name=value,proto3" json:"value,omitempty"`
+	Value *string `protobuf:"bytes,9,opt,name=value,proto3,oneof" json:"value,omitempty"`
 	// For BinaryReading: binary value as bytes
-	BinaryValue []byte `protobuf:"bytes,10,opt,name=binary_value,json=binaryValue,proto3" json:"binary_value,omitempty"`
+	BinaryValue []byte `protobuf:"bytes,10,opt,name=binary_value,json=binaryValue,proto3,oneof" json:"binary_value,omitempty"`
 	// For BinaryReading: media type (e.g., MIME Type)
-	MediaType string `protobuf:"bytes,11,opt,name=media_type,json=mediaType,proto3" json:"media_type,omitempty"`
+	MediaType *string `protobuf:"bytes,11,opt,name=media_type,json=mediaType,proto3,oneof" json:"media_type,omitempty"`
 	// For ObjectReading: object value
-	// Entire object value is stored as MessagePack-encoded bytes to preserve type information
-	ObjectValue []byte `protobuf:"bytes,12,opt,name=object_value,json=objectValue,proto3" json:"object_value,omitempty"`
+	// Entire object value is stored as MessagePack-encoded bytes
+	ObjectValue []byte `protobuf:"bytes,12,opt,name=object_value,json=objectValue,proto3,oneof" json:"object_value,omitempty"`
 	// For NumericReading: numeric value
-	// Numeric value is stored as MessagePack-encoded bytes to preserve type information
-	NumericValue []byte `protobuf:"bytes,13,opt,name=numeric_value,json=numericValue,proto3" json:"numeric_value,omitempty"`
+	// Numeric value is stored as MessagePack-encoded bytes
+	NumericValue []byte `protobuf:"bytes,13,opt,name=numeric_value,json=numericValue,proto3,oneof" json:"numeric_value,omitempty"`
 	// Indicates if the reading value is null
-	IsNull        bool `protobuf:"varint,14,opt,name=is_null,json=isNull,proto3" json:"is_null,omitempty"`
+	IsNull        *bool `protobuf:"varint,14,opt,name=is_null,json=isNull,proto3,oneof" json:"is_null,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Reading) Reset() {
 	*x = Reading{}
-	mi := &file_pkg_protobuf_event_proto_msgTypes[1]
+	mi := &file_event_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -187,7 +187,7 @@ func (x *Reading) String() string {
 func (*Reading) ProtoMessage() {}
 
 func (x *Reading) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_protobuf_event_proto_msgTypes[1]
+	mi := &file_event_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -200,54 +200,54 @@ func (x *Reading) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Reading.ProtoReflect.Descriptor instead.
 func (*Reading) Descriptor() ([]byte, []int) {
-	return file_pkg_protobuf_event_proto_rawDescGZIP(), []int{1}
+	return file_event_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Reading) GetId() string {
-	if x != nil {
-		return x.Id
+	if x != nil && x.Id != nil {
+		return *x.Id
 	}
 	return ""
 }
 
 func (x *Reading) GetOrigin() int64 {
-	if x != nil {
-		return x.Origin
+	if x != nil && x.Origin != nil {
+		return *x.Origin
 	}
 	return 0
 }
 
 func (x *Reading) GetDeviceName() string {
-	if x != nil {
-		return x.DeviceName
+	if x != nil && x.DeviceName != nil {
+		return *x.DeviceName
 	}
 	return ""
 }
 
 func (x *Reading) GetResourceName() string {
-	if x != nil {
-		return x.ResourceName
+	if x != nil && x.ResourceName != nil {
+		return *x.ResourceName
 	}
 	return ""
 }
 
 func (x *Reading) GetProfileName() string {
-	if x != nil {
-		return x.ProfileName
+	if x != nil && x.ProfileName != nil {
+		return *x.ProfileName
 	}
 	return ""
 }
 
 func (x *Reading) GetValueType() string {
-	if x != nil {
-		return x.ValueType
+	if x != nil && x.ValueType != nil {
+		return *x.ValueType
 	}
 	return ""
 }
 
 func (x *Reading) GetUnits() string {
-	if x != nil {
-		return x.Units
+	if x != nil && x.Units != nil {
+		return *x.Units
 	}
 	return ""
 }
@@ -260,8 +260,8 @@ func (x *Reading) GetTags() []byte {
 }
 
 func (x *Reading) GetValue() string {
-	if x != nil {
-		return x.Value
+	if x != nil && x.Value != nil {
+		return *x.Value
 	}
 	return ""
 }
@@ -274,8 +274,8 @@ func (x *Reading) GetBinaryValue() []byte {
 }
 
 func (x *Reading) GetMediaType() string {
-	if x != nil {
-		return x.MediaType
+	if x != nil && x.MediaType != nil {
+		return *x.MediaType
 	}
 	return ""
 }
@@ -295,67 +295,90 @@ func (x *Reading) GetNumericValue() []byte {
 }
 
 func (x *Reading) GetIsNull() bool {
-	if x != nil {
-		return x.IsNull
+	if x != nil && x.IsNull != nil {
+		return *x.IsNull
 	}
 	return false
 }
 
-var File_pkg_protobuf_event_proto protoreflect.FileDescriptor
+var File_event_proto protoreflect.FileDescriptor
 
-const file_pkg_protobuf_event_proto_rawDesc = "" +
+const file_event_proto_rawDesc = "" +
 	"\n" +
-	"\x18pkg/protobuf/event.proto\x12\bprotobuf\"\xf8\x01\n" +
-	"\x05Event\x12\x1f\n" +
-	"\vapi_version\x18\x01 \x01(\tR\n" +
-	"apiVersion\x12\x0e\n" +
-	"\x02id\x18\x02 \x01(\tR\x02id\x12\x1f\n" +
-	"\vdevice_name\x18\x03 \x01(\tR\n" +
-	"deviceName\x12!\n" +
-	"\fprofile_name\x18\x04 \x01(\tR\vprofileName\x12\x1f\n" +
-	"\vsource_name\x18\x05 \x01(\tR\n" +
-	"sourceName\x12\x16\n" +
-	"\x06origin\x18\x06 \x01(\x03R\x06origin\x12-\n" +
-	"\breadings\x18\a \x03(\v2\x11.protobuf.ReadingR\breadings\x12\x12\n" +
-	"\x04tags\x18\b \x01(\fR\x04tags\"\x9c\x03\n" +
-	"\aReading\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06origin\x18\x02 \x01(\x03R\x06origin\x12\x1f\n" +
-	"\vdevice_name\x18\x03 \x01(\tR\n" +
-	"deviceName\x12#\n" +
-	"\rresource_name\x18\x04 \x01(\tR\fresourceName\x12!\n" +
-	"\fprofile_name\x18\x05 \x01(\tR\vprofileName\x12\x1d\n" +
+	"\vevent.proto\x12\bprotobuf\"\xf7\x02\n" +
+	"\x05Event\x12$\n" +
+	"\vapi_version\x18\x01 \x01(\tH\x00R\n" +
+	"apiVersion\x88\x01\x01\x12\x13\n" +
+	"\x02id\x18\x02 \x01(\tH\x01R\x02id\x88\x01\x01\x12$\n" +
+	"\vdevice_name\x18\x03 \x01(\tH\x02R\n" +
+	"deviceName\x88\x01\x01\x12&\n" +
+	"\fprofile_name\x18\x04 \x01(\tH\x03R\vprofileName\x88\x01\x01\x12$\n" +
+	"\vsource_name\x18\x05 \x01(\tH\x04R\n" +
+	"sourceName\x88\x01\x01\x12\x1b\n" +
+	"\x06origin\x18\x06 \x01(\x03H\x05R\x06origin\x88\x01\x01\x12-\n" +
+	"\breadings\x18\a \x03(\v2\x11.protobuf.ReadingR\breadings\x12\x17\n" +
+	"\x04tags\x18\b \x01(\fH\x06R\x04tags\x88\x01\x01B\x0e\n" +
+	"\f_api_versionB\x05\n" +
+	"\x03_idB\x0e\n" +
+	"\f_device_nameB\x0f\n" +
+	"\r_profile_nameB\x0e\n" +
+	"\f_source_nameB\t\n" +
+	"\a_originB\a\n" +
+	"\x05_tags\"\xa2\x05\n" +
+	"\aReading\x12\x13\n" +
+	"\x02id\x18\x01 \x01(\tH\x00R\x02id\x88\x01\x01\x12\x1b\n" +
+	"\x06origin\x18\x02 \x01(\x03H\x01R\x06origin\x88\x01\x01\x12$\n" +
+	"\vdevice_name\x18\x03 \x01(\tH\x02R\n" +
+	"deviceName\x88\x01\x01\x12(\n" +
+	"\rresource_name\x18\x04 \x01(\tH\x03R\fresourceName\x88\x01\x01\x12&\n" +
+	"\fprofile_name\x18\x05 \x01(\tH\x04R\vprofileName\x88\x01\x01\x12\"\n" +
 	"\n" +
-	"value_type\x18\x06 \x01(\tR\tvalueType\x12\x14\n" +
-	"\x05units\x18\a \x01(\tR\x05units\x12\x12\n" +
-	"\x04tags\x18\b \x01(\fR\x04tags\x12\x14\n" +
-	"\x05value\x18\t \x01(\tR\x05value\x12!\n" +
+	"value_type\x18\x06 \x01(\tH\x05R\tvalueType\x88\x01\x01\x12\x19\n" +
+	"\x05units\x18\a \x01(\tH\x06R\x05units\x88\x01\x01\x12\x17\n" +
+	"\x04tags\x18\b \x01(\fH\aR\x04tags\x88\x01\x01\x12\x19\n" +
+	"\x05value\x18\t \x01(\tH\bR\x05value\x88\x01\x01\x12&\n" +
 	"\fbinary_value\x18\n" +
-	" \x01(\fR\vbinaryValue\x12\x1d\n" +
+	" \x01(\fH\tR\vbinaryValue\x88\x01\x01\x12\"\n" +
 	"\n" +
-	"media_type\x18\v \x01(\tR\tmediaType\x12!\n" +
-	"\fobject_value\x18\f \x01(\fR\vobjectValue\x12#\n" +
-	"\rnumeric_value\x18\r \x01(\fR\fnumericValue\x12\x17\n" +
-	"\ais_null\x18\x0e \x01(\bR\x06isNullB=Z;github.com/IOTechSystems/go-mod-central-ext/v4/pkg/protobufb\x06proto3"
+	"media_type\x18\v \x01(\tH\n" +
+	"R\tmediaType\x88\x01\x01\x12&\n" +
+	"\fobject_value\x18\f \x01(\fH\vR\vobjectValue\x88\x01\x01\x12(\n" +
+	"\rnumeric_value\x18\r \x01(\fH\fR\fnumericValue\x88\x01\x01\x12\x1c\n" +
+	"\ais_null\x18\x0e \x01(\bH\rR\x06isNull\x88\x01\x01B\x05\n" +
+	"\x03_idB\t\n" +
+	"\a_originB\x0e\n" +
+	"\f_device_nameB\x10\n" +
+	"\x0e_resource_nameB\x0f\n" +
+	"\r_profile_nameB\r\n" +
+	"\v_value_typeB\b\n" +
+	"\x06_unitsB\a\n" +
+	"\x05_tagsB\b\n" +
+	"\x06_valueB\x0f\n" +
+	"\r_binary_valueB\r\n" +
+	"\v_media_typeB\x0f\n" +
+	"\r_object_valueB\x10\n" +
+	"\x0e_numeric_valueB\n" +
+	"\n" +
+	"\b_is_nullB=Z;github.com/IOTechSystems/go-mod-central-ext/v4/pkg/protobufb\x06proto3"
 
 var (
-	file_pkg_protobuf_event_proto_rawDescOnce sync.Once
-	file_pkg_protobuf_event_proto_rawDescData []byte
+	file_event_proto_rawDescOnce sync.Once
+	file_event_proto_rawDescData []byte
 )
 
-func file_pkg_protobuf_event_proto_rawDescGZIP() []byte {
-	file_pkg_protobuf_event_proto_rawDescOnce.Do(func() {
-		file_pkg_protobuf_event_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_pkg_protobuf_event_proto_rawDesc), len(file_pkg_protobuf_event_proto_rawDesc)))
+func file_event_proto_rawDescGZIP() []byte {
+	file_event_proto_rawDescOnce.Do(func() {
+		file_event_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_event_proto_rawDesc), len(file_event_proto_rawDesc)))
 	})
-	return file_pkg_protobuf_event_proto_rawDescData
+	return file_event_proto_rawDescData
 }
 
-var file_pkg_protobuf_event_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_pkg_protobuf_event_proto_goTypes = []any{
+var file_event_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_event_proto_goTypes = []any{
 	(*Event)(nil),   // 0: protobuf.Event
 	(*Reading)(nil), // 1: protobuf.Reading
 }
-var file_pkg_protobuf_event_proto_depIdxs = []int32{
+var file_event_proto_depIdxs = []int32{
 	1, // 0: protobuf.Event.readings:type_name -> protobuf.Reading
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
@@ -364,26 +387,28 @@ var file_pkg_protobuf_event_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_pkg_protobuf_event_proto_init() }
-func file_pkg_protobuf_event_proto_init() {
-	if File_pkg_protobuf_event_proto != nil {
+func init() { file_event_proto_init() }
+func file_event_proto_init() {
+	if File_event_proto != nil {
 		return
 	}
+	file_event_proto_msgTypes[0].OneofWrappers = []any{}
+	file_event_proto_msgTypes[1].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_protobuf_event_proto_rawDesc), len(file_pkg_protobuf_event_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_event_proto_rawDesc), len(file_event_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_pkg_protobuf_event_proto_goTypes,
-		DependencyIndexes: file_pkg_protobuf_event_proto_depIdxs,
-		MessageInfos:      file_pkg_protobuf_event_proto_msgTypes,
+		GoTypes:           file_event_proto_goTypes,
+		DependencyIndexes: file_event_proto_depIdxs,
+		MessageInfos:      file_event_proto_msgTypes,
 	}.Build()
-	File_pkg_protobuf_event_proto = out.File
-	file_pkg_protobuf_event_proto_goTypes = nil
-	file_pkg_protobuf_event_proto_depIdxs = nil
+	File_event_proto = out.File
+	file_event_proto_goTypes = nil
+	file_event_proto_depIdxs = nil
 }

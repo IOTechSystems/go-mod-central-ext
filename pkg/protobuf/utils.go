@@ -16,13 +16,25 @@ import (
 
 // ConvertEventToProtobuf converts dtos.Event to protobuf Event
 func ConvertEventToProtobuf(event dtos.Event) (*Event, error) {
-	pbEvent := &Event{
-		ApiVersion:  event.ApiVersion,
-		Id:          event.Id,
-		DeviceName:  event.DeviceName,
-		ProfileName: event.ProfileName,
-		SourceName:  event.SourceName,
-		Origin:      event.Origin,
+	pbEvent := &Event{}
+
+	if event.ApiVersion != "" {
+		pbEvent.ApiVersion = &event.ApiVersion
+	}
+	if event.Id != "" {
+		pbEvent.Id = &event.Id
+	}
+	if event.DeviceName != "" {
+		pbEvent.DeviceName = &event.DeviceName
+	}
+	if event.ProfileName != "" {
+		pbEvent.ProfileName = &event.ProfileName
+	}
+	if event.SourceName != "" {
+		pbEvent.SourceName = &event.SourceName
+	}
+	if event.Origin != 0 {
+		pbEvent.Origin = &event.Origin
 	}
 
 	pbEvent.Readings = make([]*Reading, len(event.Readings))
@@ -47,21 +59,40 @@ func ConvertEventToProtobuf(event dtos.Event) (*Event, error) {
 
 // convertReadingToProtobuf converts dtos.BaseReading to protobuf Reading
 func convertReadingToProtobuf(reading dtos.BaseReading) (*Reading, error) {
-	pbReading := &Reading{
-		Id:           reading.Id,
-		Origin:       reading.Origin,
-		DeviceName:   reading.DeviceName,
-		ResourceName: reading.ResourceName,
-		ProfileName:  reading.ProfileName,
-		ValueType:    reading.ValueType,
-		Units:        reading.Units,
-		IsNull:       reading.IsNull(),
+	pbReading := &Reading{}
+
+	if reading.Id != "" {
+		pbReading.Id = &reading.Id
 	}
+	if reading.Origin != 0 {
+		pbReading.Origin = &reading.Origin
+	}
+	if reading.DeviceName != "" {
+		pbReading.DeviceName = &reading.DeviceName
+	}
+	if reading.ResourceName != "" {
+		pbReading.ResourceName = &reading.ResourceName
+	}
+	if reading.ProfileName != "" {
+		pbReading.ProfileName = &reading.ProfileName
+	}
+	if reading.ValueType != "" {
+		pbReading.ValueType = &reading.ValueType
+	}
+	if reading.Units != "" {
+		pbReading.Units = &reading.Units
+	}
+	isNull := reading.IsNull()
+	pbReading.IsNull = &isNull
 
 	switch reading.ValueType {
 	case common.ValueTypeBinary:
-		pbReading.BinaryValue = reading.BinaryValue
-		pbReading.MediaType = reading.MediaType
+		if len(reading.BinaryValue) > 0 {
+			pbReading.BinaryValue = reading.BinaryValue
+		}
+		if reading.MediaType != "" {
+			pbReading.MediaType = &reading.MediaType
+		}
 	case common.ValueTypeObject, common.ValueTypeObjectArray:
 		if reading.ObjectValue != nil {
 			// Encode object value as MessagePack bytes to preserve type information
@@ -80,7 +111,7 @@ func convertReadingToProtobuf(reading dtos.BaseReading) (*Reading, error) {
 			}
 			pbReading.NumericValue = msgpackBytes
 		} else {
-			pbReading.Value = reading.Value
+			pbReading.Value = &reading.Value
 		}
 	}
 
