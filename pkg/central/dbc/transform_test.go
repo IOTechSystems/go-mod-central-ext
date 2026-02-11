@@ -39,9 +39,11 @@ func TestConvertDBCtoDevice(t *testing.T) {
 		CommType:    commType,
 		Port:        port,
 	}
-	deviceDTOs, err, validateErr := ConvertDBCtoDevice(data, args)
+	converter, err := ConvertDBCtoDevice(data, args)
 	require.NoError(t, err)
+	validateErr := converter.GetValidateErrors()
 	require.Empty(t, validateErr)
+	deviceDTOs := converter.GetDTOs()
 	require.NotEmpty(t, deviceDTOs)
 
 	expectedDeviceDTO := edgexDtos.Device{
@@ -85,11 +87,13 @@ func TestConvertDBCtoProfile(t *testing.T) {
 	data, err := io.ReadAll(ioReader)
 	require.NoError(t, err)
 
-	profileDTOs, err, _ := ConvertDBCtoProfile(data)
+	converter, err := ConvertDBCtoProfile(data)
 	if err != nil {
 		t.Errorf("Expected no error, but got: %v", err)
+		return
 	}
 
+	profileDTOs := converter.GetDTOs()
 	if len(profileDTOs) == 0 {
 		t.Errorf("Expected 1 DeviceProfile, but got 0")
 	}
