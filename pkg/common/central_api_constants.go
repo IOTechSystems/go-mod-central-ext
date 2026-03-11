@@ -1,4 +1,4 @@
-// Copyright (C) 2024-2025 IOTech Ltd
+// Copyright (C) 2024-2026 IOTech Ltd
 
 package common
 
@@ -16,6 +16,8 @@ const (
 	Unacknowledge = "unacknowledge"
 	NoCallback    = "nocallback" //query string to ask core-metadata not to invoke DS callback
 	Role          = "role"
+	Timeseries    = "timeseries"
+	Payload       = "payload"
 )
 
 const (
@@ -51,6 +53,10 @@ const (
 	ApiRetentionPolicyRoute     = edgexCommon.ApiBase + "/retentionpolicy"
 	ApiRetentionPolicyByIdRoute = ApiRetentionPolicyRoute + "/" + edgexCommon.Id + "/:" + edgexCommon.Id
 	ApiAllRetentionPolicyRoute  = ApiRetentionPolicyRoute + "/" + edgexCommon.All
+
+	ApiTimeSeriesRoute                                        = edgexCommon.ApiBase + "/" + Timeseries
+	ApiTimeSeriesByDeviceNameAndTimeRangeRoute                = ApiTimeSeriesRoute + "/" + edgexCommon.Device + "/" + edgexCommon.Name + "/:" + edgexCommon.Name + "/" + edgexCommon.Start + "/:" + edgexCommon.Start + "/" + edgexCommon.End + "/:" + edgexCommon.End
+	ApiTimeSeriesByDeviceNameAndResourceNameAndTimeRangeRoute = ApiTimeSeriesRoute + "/" + edgexCommon.Device + "/" + edgexCommon.Name + "/:" + edgexCommon.Name + "/" + edgexCommon.ResourceName + "/:" + edgexCommon.ResourceName + "/" + edgexCommon.Start + "/:" + edgexCommon.Start + "/" + edgexCommon.End + "/:" + edgexCommon.End
 )
 
 // constants relate to header names
