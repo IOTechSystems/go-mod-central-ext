@@ -10,7 +10,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	github.com/xuri/excelize/v2 v2.10.1
-	go.einride.tech/can v0.16.1
+	go.einride.tech/can v0.17.0
 	google.golang.org/protobuf v1.36.11
 )
 
