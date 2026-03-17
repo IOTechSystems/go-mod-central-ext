@@ -152,3 +152,23 @@ const (
 	OUT = "OUT"
 	IN  = "IN"
 )
+
+// Constants related for Alarm service
+// Common constants for support-provision and UI backend
+const (
+	AlarmServiceKey    = "alarm-service"
+	SubDirTemplates    = "templates"
+	SubDirConditions   = "conditions"
+	SubDirActions      = "actions"
+	SubDirRoutes       = "routes"
+	SubDirAssociations = "associations"
+	SubDirConfigs      = "configs"
+
+	AlarmAssociationResource   = "resource"
+	AlarmAssociationConfigName = "configName"
+	AlarmAssociationEdgex      = "edgex"
+	AlarmSourceTypeDevice      = "edgexDevice"
+	AlarmSourceTypeProfile     = "edgexProfile"
+	AlarmSourceTypeMessageBus  = "messageBus"
+	AlarmSourceTypeSparkplug   = "sparkplug"
+)
