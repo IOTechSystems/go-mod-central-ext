@@ -57,6 +57,15 @@ const (
 	ApiTimeSeriesRoute                                        = edgexCommon.ApiBase + "/" + Timeseries
 	ApiTimeSeriesByDeviceNameAndTimeRangeRoute                = ApiTimeSeriesRoute + "/" + edgexCommon.Device + "/" + edgexCommon.Name + "/:" + edgexCommon.Name + "/" + edgexCommon.Start + "/:" + edgexCommon.Start + "/" + edgexCommon.End + "/:" + edgexCommon.End
 	ApiTimeSeriesByDeviceNameAndResourceNameAndTimeRangeRoute = ApiTimeSeriesRoute + "/" + edgexCommon.Device + "/" + edgexCommon.Name + "/:" + edgexCommon.Name + "/" + edgexCommon.ResourceName + "/:" + edgexCommon.ResourceName + "/" + edgexCommon.Start + "/:" + edgexCommon.Start + "/" + edgexCommon.End + "/:" + edgexCommon.End
+
+	AlarmConfigAPIRoute      = edgexCommon.ApiBase + "/alarmConfigs/configName"
+	AssociationAPIRoute      = edgexCommon.ApiBase + "/associations/alarmConfigs/source"
+	AssociationQueryAPIRoute = edgexCommon.ApiBase + "/associations/alarmConfigs"
+
+	AlarmTemplateAPIRoute  = edgexCommon.ApiBase + "/templates"
+	AlarmConditionAPIRoute = edgexCommon.ApiBase + "/conditions"
+	AlarmActionAPIRoute    = edgexCommon.ApiBase + "/actions"
+	AlarmRouteAPIRoute     = edgexCommon.ApiBase + "/routes"
 )
 
 // constants relate to header names
