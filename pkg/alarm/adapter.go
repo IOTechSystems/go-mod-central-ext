@@ -203,6 +203,248 @@ func (a *Adapter) AddAction(ctx context.Context, data []byte) errors.EdgeX {
 	return nil
 }
 
+// ExportItem represents an exported alarm setting item.
+type ExportItem struct {
+	Name string // file name (without extension), e.g. "my-template"
+	Data []byte // JSON content, can be written directly to a file
+}
+
+// listItems is a generic helper that lists all items from a given alarm API,
+// extracts items by the responseKey, and returns them as ExportItem slice.
+func (a *Adapter) listItems(ctx context.Context,
+	listFn func(context.Context) (map[string]any, errors.EdgeX),
+	responseKey string) ([]ExportItem, errors.EdgeX) {
+
+	res, err := listFn(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	items, ok := res[responseKey].([]any)
+	if !ok {
+		a.lc.Debugf("no %s found to export", responseKey)
+		return nil, nil
+	}
+
+	var result []ExportItem
+	for _, item := range items {
+		itemMap, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		name, _ := itemMap[common.Name].(string)
+		if name == "" {
+			a.lc.Warnf("%s missing 'name', skipping export the data '%v'", responseKey, item)
+			continue
+		}
+
+		data, marshalErr := json.MarshalIndent(itemMap, "", "  ")
+		if marshalErr != nil {
+			a.lc.Warnf("failed to marshal %s '%s': %v", responseKey, name, marshalErr)
+			continue
+		}
+		result = append(result, ExportItem{Name: name, Data: data})
+	}
+	return result, nil
+}
+
+func (a *Adapter) ExportAlarmConfigs(ctx context.Context) ([]ExportItem, errors.EdgeX) {
+	return a.listItems(ctx, a.client.AllAlarmConfigs, common.AlarmJsonKeyAlarmConfigs)
+}
+
+func (a *Adapter) ExportTemplates(ctx context.Context) ([]ExportItem, errors.EdgeX) {
+	return a.listItems(ctx, a.client.AllTemplates, common.AlarmJsonKeyTemplates)
+}
+
+func (a *Adapter) ExportConditions(ctx context.Context) ([]ExportItem, errors.EdgeX) {
+	return a.listItems(ctx, a.client.AllConditions, common.AlarmJsonKeyConditions)
+}
+
+func (a *Adapter) ExportActions(ctx context.Context) ([]ExportItem, errors.EdgeX) {
+	res, err := a.client.AllActions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	items, ok := res[common.AlarmJsonKeyActions].([]any)
+	if !ok {
+		a.lc.Debug("no actions found to export")
+		return nil, nil
+	}
+
+	var result []ExportItem
+	for _, item := range items {
+		actionMap, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		name, _ := actionMap[common.Name].(string)
+		if name == "" {
+			continue
+		}
+
+		// convert templateId → templateName
+		if templateId, ok := actionMap["templateId"].(string); ok && templateId != "" {
+			templateRes, err := a.client.TemplateById(ctx, templateId)
+			if err != nil {
+				a.lc.Warnf("failed to resolve templateId '%s' for action '%s': %v", templateId, name, err)
+			} else {
+				if templateName, ok := templateRes[common.Name].(string); ok {
+					actionMap["templateName"] = templateName
+				}
+			}
+			delete(actionMap, "templateId")
+		}
+
+		data, marshalErr := json.MarshalIndent(actionMap, "", "  ")
+		if marshalErr != nil {
+			a.lc.Warnf("failed to marshal action '%s': %v", name, marshalErr)
+			continue
+		}
+		result = append(result, ExportItem{Name: name, Data: data})
+	}
+	return result, nil
+}
+
+func (a *Adapter) ExportRoutes(ctx context.Context) ([]ExportItem, errors.EdgeX) {
+	res, err := a.client.AllRoutes(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	items, ok := res[common.AlarmJsonKeyRoutes].([]any)
+	if !ok {
+		a.lc.Debug("no routes found to export")
+		return nil, nil
+	}
+
+	var result []ExportItem
+	for _, item := range items {
+		routeMap, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		name, _ := routeMap[common.Name].(string)
+		if name == "" {
+			continue
+		}
+
+		// convert conditionId → conditionName
+		if conditionId, ok := routeMap["conditionId"].(string); ok && conditionId != "" {
+			conditionRes, err := a.client.ConditionById(ctx, conditionId)
+			if err != nil {
+				a.lc.Warnf("failed to resolve conditionId '%s' for route '%s': %v", conditionId, name, err)
+			} else {
+				if conditionName, ok := conditionRes[common.Name].(string); ok {
+					routeMap["conditionName"] = conditionName
+				}
+			}
+			delete(routeMap, "conditionId")
+		}
+
+		// convert actions (ID array) → actionNames (name array)
+		if actionIds, ok := routeMap[common.AlarmJsonKeyActions].([]any); ok {
+			var actionNames []string
+			for _, aid := range actionIds {
+				actionId, ok := aid.(string)
+				if !ok {
+					continue
+				}
+				actionRes, err := a.client.ActionById(ctx, actionId)
+				if err != nil {
+					a.lc.Warnf("failed to resolve actionId '%s' for route '%s': %v", actionId, name, err)
+					continue
+				}
+				if actionName, ok := actionRes[common.Name].(string); ok {
+					actionNames = append(actionNames, actionName)
+				}
+			}
+			routeMap["actionNames"] = actionNames
+			delete(routeMap, common.AlarmJsonKeyActions)
+		}
+
+		data, marshalErr := json.MarshalIndent(routeMap, "", "  ")
+		if marshalErr != nil {
+			a.lc.Warnf("failed to marshal route '%s': %v", name, marshalErr)
+			continue
+		}
+		result = append(result, ExportItem{Name: name, Data: data})
+	}
+	return result, nil
+}
+
+func (a *Adapter) ExportAssociations(ctx context.Context) ([]ExportItem, errors.EdgeX) {
+	res, err := a.client.AllAssociations(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	items, ok := res["associations"].([]any)
+	if !ok {
+		a.lc.Debug("no associations found to export")
+		return nil, nil
+	}
+
+	var associations []models.AlarmAssociation
+	for _, item := range items {
+		itemMap, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		sourceType, ok := itemMap["sourceType"].(string)
+		if !ok {
+			a.lc.Warn("association item missing 'sourceType', skipping")
+			continue
+		}
+		source, ok := itemMap["source"].(map[string]any)
+		if !ok {
+			a.lc.Warnf("association item missing 'source' for sourceType '%s', skipping", sourceType)
+			continue
+		}
+		configNames, ok := itemMap["alarmConfigNames"].([]any)
+		if !ok {
+			a.lc.Warnf("association item missing 'alarmConfigNames' for sourceType '%s', skipping", sourceType)
+			continue
+		}
+
+		for _, cn := range configNames {
+			configName, _ := cn.(string)
+			if configName == "" {
+				continue
+			}
+			assoc := models.AlarmAssociation{
+				SourceType: sourceType,
+				ConfigName: configName,
+			}
+			switch sourceType {
+			case common.AlarmSourceTypeDevice:
+				assoc.DeviceName, _ = source[common.AlarmSourceTypeDevice].(string)
+				assoc.ResourceName, _ = source[common.AlarmAssociationResource].(string)
+			case common.AlarmSourceTypeProfile:
+				assoc.ProfileName, _ = source[common.AlarmSourceTypeProfile].(string)
+				assoc.ResourceName, _ = source[common.AlarmAssociationResource].(string)
+			case common.AlarmSourceTypeMessageBus:
+				assoc.MessageBusSourceName, _ = source["messageBusSourceName"].(string)
+			case common.AlarmSourceTypeSparkplug:
+				assoc.SparkplugNodeId, _ = source["sparkplugNodeId"].(string)
+				assoc.SparkplugDeviceName, _ = source["sparkplugDeviceName"].(string)
+				assoc.SparkplugMetricName, _ = source["sparkplugMetricName"].(string)
+			}
+			associations = append(associations, assoc)
+		}
+	}
+
+	if len(associations) == 0 {
+		return nil, nil
+	}
+
+	data, marshalErr := json.MarshalIndent(associations, "", "  ")
+	if marshalErr != nil {
+		return nil, errors.NewCommonEdgeXWrapper(marshalErr)
+	}
+	return []ExportItem{{Name: "associations", Data: data}}, nil
+}
+
 func (a *Adapter) AddRoute(ctx context.Context, data []byte) errors.EdgeX {
 	var route struct {
 		Name          string
@@ -248,7 +490,7 @@ func (a *Adapter) AddRoute(ctx context.Context, data []byte) errors.EdgeX {
 	}
 	// ID required for REST API
 	routeMap["conditionId"] = conditionId
-	routeMap["actions"] = actionIds
+	routeMap[common.AlarmJsonKeyActions] = actionIds
 	postData, marshalErr := json.Marshal(routeMap)
 	if marshalErr != nil {
 		return errors.NewCommonEdgeX(errors.Kind(marshalErr), fmt.Sprintf("fail to marshal routeMap '%s'", route.Name), marshalErr)

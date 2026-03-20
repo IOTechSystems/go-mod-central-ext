@@ -164,6 +164,12 @@ const (
 	SubDirAssociations = "associations"
 	SubDirConfigs      = "configs"
 
+	AlarmJsonKeyAlarmConfigs = "alarmConfigs"
+	AlarmJsonKeyActions      = SubDirActions
+	AlarmJsonKeyTemplates    = SubDirTemplates
+	AlarmJsonKeyConditions   = SubDirConditions
+	AlarmJsonKeyRoutes       = SubDirRoutes
+
 	AlarmAssociationResource   = "resource"
 	AlarmAssociationConfigName = "configName"
 	AlarmAssociationEdgex      = "edgex"
