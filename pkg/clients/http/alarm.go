@@ -15,6 +15,8 @@ import (
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"
 )
 
+const defaultMaxLimit = "100"
+
 // AlarmClient encapsulates HTTP operations against the support-alarm service.
 type AlarmClient struct {
 	baseUrl               string
@@ -174,12 +176,81 @@ func (c *AlarmClient) AddRoute(ctx context.Context, data []byte) errors.EdgeX {
 	return nil
 }
 
+// queryAll sends GET {apiRoute}?offset=0&limit=-1 and returns the full response map.
+func (c *AlarmClient) queryAll(ctx context.Context, apiRoute string) (map[string]any, errors.EdgeX) {
+	params := url.Values{}
+	params.Set(pkgCommon.Offset, "0")
+	params.Set(pkgCommon.Limit, defaultMaxLimit) // TODO use -1 if the alarm service supports it
+	var res map[string]any
+	err := utils.GetRequest(ctx, &res, c.baseUrl, apiRoute, params, c.authInjector)
+	if err != nil {
+		return nil, errors.NewCommonEdgeX(errors.Kind(err), fmt.Sprintf("fail to query all from %s", apiRoute), err)
+	}
+	return res, nil
+}
+
+// AllAlarmConfigs lists all alarm configs.
+func (c *AlarmClient) AllAlarmConfigs(ctx context.Context) (map[string]any, errors.EdgeX) {
+	return c.queryAll(ctx, pkgCommon.AlarmConfigsListAPIRoute)
+}
+
+// AllAssociations lists all associations.
+func (c *AlarmClient) AllAssociations(ctx context.Context) (map[string]any, errors.EdgeX) {
+	return c.queryAll(ctx, pkgCommon.AssociationQueryAPIRoute)
+}
+
+// AllTemplates lists all templates.
+func (c *AlarmClient) AllTemplates(ctx context.Context) (map[string]any, errors.EdgeX) {
+	return c.queryAll(ctx, pkgCommon.AlarmTemplateAPIRoute)
+}
+
+// AllConditions lists all conditions.
+func (c *AlarmClient) AllConditions(ctx context.Context) (map[string]any, errors.EdgeX) {
+	return c.queryAll(ctx, pkgCommon.AlarmConditionAPIRoute)
+}
+
+// AllActions lists all actions.
+func (c *AlarmClient) AllActions(ctx context.Context) (map[string]any, errors.EdgeX) {
+	return c.queryAll(ctx, pkgCommon.AlarmActionAPIRoute)
+}
+
+// AllRoutes lists all routes.
+func (c *AlarmClient) AllRoutes(ctx context.Context) (map[string]any, errors.EdgeX) {
+	return c.queryAll(ctx, pkgCommon.AlarmRouteAPIRoute)
+}
+
+// queryById sends GET {apiRoute}/{id} and returns the response map.
+func (c *AlarmClient) queryById(ctx context.Context, apiRoute, id string) (map[string]any, errors.EdgeX) {
+	requestPath := fmt.Sprintf("%s/%s", apiRoute, id)
+	var res map[string]any
+	err := utils.GetRequest(ctx, &res, c.baseUrl, requestPath, nil, c.authInjector)
+	if err != nil {
+		return nil, errors.NewCommonEdgeX(errors.Kind(err), fmt.Sprintf("fail to query %s/%s", apiRoute, id), err)
+	}
+	return res, nil
+}
+
+// TemplateById queries a template by ID.
+func (c *AlarmClient) TemplateById(ctx context.Context, id string) (map[string]any, errors.EdgeX) {
+	return c.queryById(ctx, pkgCommon.AlarmTemplateByIdRoute, id)
+}
+
+// ConditionById queries a condition by ID.
+func (c *AlarmClient) ConditionById(ctx context.Context, id string) (map[string]any, errors.EdgeX) {
+	return c.queryById(ctx, pkgCommon.AlarmConditionByIdRoute, id)
+}
+
+// ActionById queries an action by ID.
+func (c *AlarmClient) ActionById(ctx context.Context, id string) (map[string]any, errors.EdgeX) {
+	return c.queryById(ctx, pkgCommon.AlarmActionByIdRoute, id)
+}
+
 // queryByName sends GET {apiRoute}?name={name}&limit=1 and parses the response.
 // Returns (id, true, nil) if found, ("", false, nil) if not found, ("", false, err) on error.
 func (c *AlarmClient) queryByName(ctx context.Context, apiRoute, name string) (models.AlarmMultiResponse, errors.EdgeX) {
 	params := url.Values{}
-	params.Set("name", name)
-	params.Set("limit", "1")
+	params.Set(pkgCommon.Name, name)
+	params.Set(pkgCommon.Limit, "1")
 
 	var res models.AlarmMultiResponse
 	err := utils.GetRequest(ctx, &res, c.baseUrl, apiRoute, params, c.authInjector)
