@@ -164,6 +164,26 @@ const (
 	SubDirAssociations = "associations"
 	SubDirConfigs      = "configs"
 
+	AlarmJsonKeyAlarmConfigs         = "alarmConfigs"
+	AlarmJsonKeyAlarmConfigNames     = "alarmConfigNames"
+	AlarmJsonKeyAssociations         = SubDirAssociations
+	AlarmJsonKeyActions              = SubDirActions
+	AlarmJsonKeyActionNames          = "actionNames"
+	AlarmJsonKeyTemplates            = SubDirTemplates
+	AlarmJsonKeyConditions           = SubDirConditions
+	AlarmJsonKeyRoutes               = SubDirRoutes
+	AlarmJsonKeyCondition            = "condition"
+	AlarmJsonKeyConditionName        = "conditionName"
+	AlarmJsonKeyTemplateId           = "templateId"
+	AlarmJsonKeyTemplateName         = "templateName"
+	AlarmJsonKeySource               = "source"
+	AlarmJsonKeySourceType           = "sourceType"
+	AlarmJsonKeyAlarmConfigName      = "alarmConfigName"
+	AlarmJsonKeyMessageBusSourceName = "messageBusSourceName"
+	AlarmJsonKeySparkplugNodeId      = "sparkplugNodeId"
+	AlarmJsonKeySparkplugDeviceName  = "sparkplugDeviceName"
+	AlarmJsonKeySparkplugMetricName  = "sparkplugMetricName"
+
 	AlarmAssociationResource   = "resource"
 	AlarmAssociationConfigName = "configName"
 	AlarmAssociationEdgex      = "edgex"
