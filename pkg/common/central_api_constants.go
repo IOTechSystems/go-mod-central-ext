@@ -44,6 +44,7 @@ const (
 	ApiAuthGraphQLRoute  = ApiAuthRoute + "/graphql"
 	ApiAuthRoutesRoute   = edgexCommon.ApiBase + "/auth-routes"
 	ApiRefreshTokenRoute = edgexCommon.ApiBase + "/refresh-token"
+	ApiTokenByUserRoute  = edgexCommon.ApiBase + "/token/user/" + edgexCommon.Name + "/:" + edgexCommon.Name
 
 	ApiKeyRoute                     = edgexCommon.ApiBase + "/key"
 	ApiVerificationKeyByIssuerRoute = ApiKeyRoute + "/" + VerificationKeyType + "/" + Issuer + "/:" + Issuer
