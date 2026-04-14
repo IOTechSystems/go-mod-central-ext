@@ -75,7 +75,7 @@ type DiscoveredDeviceInfo struct {
 type ScanDeviceRequest struct {
 	BaseRequest `json:",inline"`
 	DeviceName  string         `json:"device"`
-	ProfileName string         `json:"profile"`
+	ProfileName string         `json:"profile,omitempty"`
 	Options     map[string]any `json:"options"`
 }
 

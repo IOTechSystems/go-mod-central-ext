@@ -70,3 +70,35 @@ func TestNewRequest(t *testing.T) {
 		})
 	}
 }
+
+func TestNewDeviceScanRequest_OmitEmptyProfileName(t *testing.T) {
+	device := DeviceInfo{}
+	request := NewDeviceScanRequest(device, "testClient", nil)
+
+	data, err := json.Marshal(request)
+	require.NoError(t, err)
+
+	var raw map[string]any
+	err = json.Unmarshal(data, &raw)
+	require.NoError(t, err)
+
+	_, hasProfile := raw["profile"]
+	assert.False(t, hasProfile, "profile field should be omitted when ProfileName is empty")
+}
+
+func TestNewDeviceScanRequest_IncludeProfileName(t *testing.T) {
+	device := DeviceInfo{}
+	device.ProfileName = "my-profile"
+	request := NewDeviceScanRequest(device, "testClient", nil)
+
+	data, err := json.Marshal(request)
+	require.NoError(t, err)
+
+	var raw map[string]any
+	err = json.Unmarshal(data, &raw)
+	require.NoError(t, err)
+
+	profileVal, hasProfile := raw["profile"]
+	assert.True(t, hasProfile, "profile field should be present when ProfileName is set")
+	assert.Equal(t, "my-profile", profileVal)
+}
