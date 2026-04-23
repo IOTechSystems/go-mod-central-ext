@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2024 IOTech Ltd
+// Copyright (C) 2021-2026 IOTech Ltd
 
 package xrtmodels
 
@@ -141,6 +141,16 @@ type MultiSchedulesResponse struct {
 type MultiSchedulesResult struct {
 	BaseResult `json:",inline"`
 	Schedules  []string `json:"schedules"`
+}
+
+type ScheduleReadResponse struct {
+	BaseResponse `json:",inline"`
+	Result       ScheduleReadResult `json:"result"`
+}
+
+type ScheduleReadResult struct {
+	BaseResult `json:",inline"`
+	Schedule   Schedule `json:"schedule"`
 }
 
 type MultiComponentsResponse struct {
