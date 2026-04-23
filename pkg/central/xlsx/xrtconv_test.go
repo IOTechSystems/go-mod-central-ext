@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2026 IOTech Ltd
 
 package xlsx
 
@@ -186,7 +186,7 @@ func TestToXrtProperties(t *testing.T) {
 	}
 	for _, testCase := range tests {
 		t.Run(testCase.protocol, func(t *testing.T) {
-			err := toXrtProperties(testCase.protocol, testCase.properties)
+			err := ToXrtProperties(testCase.protocol, testCase.properties)
 			require.NoError(t, err)
 			assert.EqualValues(t, testCase.expected, testCase.properties)
 		})
@@ -213,7 +213,7 @@ func TestToXrType_Invalid(t *testing.T) {
 	}
 	for _, testCase := range tests {
 		t.Run(testCase.protocol, func(t *testing.T) {
-			err := toXrtProperties(testCase.protocol, testCase.properties)
+			err := ToXrtProperties(testCase.protocol, testCase.properties)
 			require.Error(t, err)
 		})
 	}

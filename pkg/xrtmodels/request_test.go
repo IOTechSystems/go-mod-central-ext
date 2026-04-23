@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2024 IOTech Ltd
+// Copyright (C) 2021-2026 IOTech Ltd
 
 package xrtmodels
 
@@ -101,4 +101,54 @@ func TestNewDeviceScanRequest_IncludeProfileName(t *testing.T) {
 	profileVal, hasProfile := raw["profile"]
 	assert.True(t, hasProfile, "profile field should be present when ProfileName is set")
 	assert.Equal(t, "my-profile", profileVal)
+}
+
+func TestNewScheduleRequests_BaseFields(t *testing.T) {
+	clientName := "testClient"
+
+	readReq := NewScheduleReadRequest("my-schedule", clientName)
+	readData, err := json.Marshal(readReq)
+	require.NoError(t, err)
+
+	updateReq := NewScheduleUpdateRequest(clientName, Schedule{
+		Name:     "my-schedule",
+		Device:   "dev1",
+		Resource: []string{"temp"},
+		Interval: 1000000,
+	})
+	updateData, err := json.Marshal(updateReq)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name       string
+		data       []byte
+		expectedOp string
+	}{
+		{"NewScheduleReadRequest", readData, ScheduleReadOperation},
+		{"NewScheduleUpdateRequest", updateData, ScheduleUpdateOperation},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var base BaseRequest
+			err = json.Unmarshal(tc.data, &base)
+			require.NoError(t, err)
+			assert.Equal(t, clientName, base.Client)
+			assert.Equal(t, tc.expectedOp, base.Op)
+		})
+	}
+}
+
+func TestNewScheduleReadRequest_ScheduleField(t *testing.T) {
+	req := NewScheduleReadRequest("target-schedule", "client1")
+	data, err := json.Marshal(req)
+	require.NoError(t, err)
+	assert.Contains(t, string(data), `"schedule":"target-schedule"`)
+}
+
+func TestNewScheduleUpdateRequest_ScheduleField(t *testing.T) {
+	s := Schedule{Name: "sched1", Device: "dev1", Resource: []string{"r"}}
+	req := NewScheduleUpdateRequest("client1", s)
+	data, err := json.Marshal(req)
+	require.NoError(t, err)
+	assert.Contains(t, string(data), `"sched1"`)
 }

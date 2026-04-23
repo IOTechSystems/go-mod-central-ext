@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2024 IOTech Ltd
+// Copyright (C) 2021-2026 IOTech Ltd
 
 package xrtmodels
 
@@ -27,6 +27,8 @@ const (
 	ScheduleAddOperation    = "schedule:add"
 	ScheduleListOperation   = "schedule:list"
 	ScheduleDeleteOperation = "schedule:delete"
+	ScheduleReadOperation   = "schedule:read"
+	ScheduleUpdateOperation = "schedule:update"
 
 	DiscoveryTriggerOperation = "discovery:trigger"
 
@@ -115,6 +117,11 @@ type ScheduleRequest struct {
 }
 
 type AddScheduleRequest struct {
+	BaseRequest `json:",inline"`
+	Schedule    Schedule `json:"schedule"`
+}
+
+type UpdateScheduleRequest struct {
 	BaseRequest `json:",inline"`
 	Schedule    Schedule `json:"schedule"`
 }
@@ -350,6 +357,20 @@ func NewScheduleDeleteRequest(scheduleName string, clientName string) ScheduleRe
 		Schedule: scheduleName,
 	}
 	return req
+}
+
+func NewScheduleReadRequest(scheduleName string, clientName string) ScheduleRequest {
+	return ScheduleRequest{
+		BaseRequest: NewBaseRequest(ScheduleReadOperation, clientName),
+		Schedule:    scheduleName,
+	}
+}
+
+func NewScheduleUpdateRequest(clientName string, schedule Schedule) UpdateScheduleRequest {
+	return UpdateScheduleRequest{
+		BaseRequest: NewBaseRequest(ScheduleUpdateOperation, clientName),
+		Schedule:    schedule,
+	}
 }
 
 func NewComponentUpdateRequest(Component string, clientName string, config map[string]interface{}) UpdateComponentRequest {

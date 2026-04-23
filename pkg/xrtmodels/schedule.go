@@ -1,3 +1,5 @@
+// Copyright (C) 2026 IOTech Ltd
+
 package xrtmodels
 
 // Schedule is used to register timed, polled reads of device resources
@@ -9,7 +11,8 @@ type Schedule struct {
 	Interval uint64             `json:"interval,omitempty"`
 	OnChange bool               `json:"on_change"`
 	Bounds   map[string]float64 `json:"bounds"`
+	Tags     map[string]any     `json:"tags,omitempty"`
 	Publish  bool               `json:"publish"`
 	Units    bool               `json:"units"`
-	Options  interface{}        `json:"options,omitempty"`
+	Options  any                `json:"options,omitempty"`
 }

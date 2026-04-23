@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2024 IOTech Ltd
+// Copyright (C) 2023-2026 IOTech Ltd
 
 package xlsx
 
@@ -101,7 +101,7 @@ func (deviceXlsx *deviceXlsx) ConvertToDTO() errors.EdgeX {
 		}
 
 		for k, v := range convertedDevice.Protocols {
-			err = toXrtProperties(k, v)
+			err = ToXrtProperties(k, v)
 			if err != nil {
 				return errors.NewCommonEdgeX(errors.Kind(err), "failed to convert EdgeX protocol properties to device connector protocol properties", err)
 			}
