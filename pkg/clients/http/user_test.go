@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2026 IOTech Ltd
 
 package http
 
@@ -79,7 +79,7 @@ func TestLogin(t *testing.T) {
 	defer ts.Close()
 
 	client := NewUserClient(ts.URL, NewNullAuthenticationInjector(), false)
-	res, err := client.Login(context.Background(), requests.LoginRequest{})
+	res, err := client.Login(context.Background(), requests.LoginRequest{}, map[string]string{"mock": "mockHeader"})
 	require.NoError(t, err)
 	require.IsType(t, responses.TokenResponse{}, res)
 }
