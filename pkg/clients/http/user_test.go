@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2026 IOTech Ltd
 
 package http
 
@@ -80,6 +80,16 @@ func TestLogin(t *testing.T) {
 
 	client := NewUserClient(ts.URL, NewNullAuthenticationInjector(), false)
 	res, err := client.Login(context.Background(), requests.LoginRequest{})
+	require.NoError(t, err)
+	require.IsType(t, responses.TokenResponse{}, res)
+}
+
+func TestLoginWithHeader(t *testing.T) {
+	ts := newTestServer(http.MethodPost, common.ApiLoginRoute, responses.TokenResponse{})
+	defer ts.Close()
+
+	client := NewUserClient(ts.URL, NewNullAuthenticationInjector(), false)
+	res, err := client.LoginWithHeader(context.Background(), requests.LoginRequest{}, map[string]string{"mock": "mockHeader"})
 	require.NoError(t, err)
 	require.IsType(t, responses.TokenResponse{}, res)
 }

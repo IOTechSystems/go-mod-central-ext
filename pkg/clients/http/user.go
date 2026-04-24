@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2026 IOTech Ltd
 
 package http
 
@@ -84,6 +84,14 @@ func (uc UserClient) DeleteUserByName(ctx context.Context, name string) (res dto
 
 func (uc UserClient) Login(ctx context.Context, reqs requests.LoginRequest) (res responses.TokenResponse, err errors.EdgeX) {
 	err = utils.PostRequestWithRawData(ctx, &res, uc.baseUrl, common.ApiLoginRoute, nil, reqs, uc.authInjector)
+	if err != nil {
+		return res, errors.NewCommonEdgeXWrapper(err)
+	}
+	return res, nil
+}
+
+func (uc UserClient) LoginWithHeader(ctx context.Context, reqs requests.LoginRequest, headers map[string]string) (res responses.TokenResponse, err errors.EdgeX) {
+	err = utils.PostRequestWithRawDataAndHeaders(ctx, &res, uc.baseUrl, common.ApiLoginRoute, nil, reqs, uc.authInjector, headers)
 	if err != nil {
 		return res, errors.NewCommonEdgeXWrapper(err)
 	}

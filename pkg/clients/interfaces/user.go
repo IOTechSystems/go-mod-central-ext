@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2026 IOTech Ltd
 
 package interfaces
 
@@ -29,6 +29,8 @@ type UserClient interface {
 	DeleteUserByName(ctx context.Context, name string) (common.BaseResponse, errors.EdgeX)
 	// Login logins a user by username and password
 	Login(ctx context.Context, req requests.LoginRequest) (responses.TokenResponse, errors.EdgeX)
+	// LoginWithHeader logins a user by username and password with additional headers
+	LoginWithHeader(ctx context.Context, req requests.LoginRequest, headers map[string]string) (responses.TokenResponse, errors.EdgeX)
 	// Logout logouts a user by the authorization header
 	Logout(ctx context.Context, headers map[string]string) errors.EdgeX
 }
