@@ -254,11 +254,79 @@ func (_c *UserClient_DeleteUserByName_Call) RunAndReturn(run func(ctx context.Co
 }
 
 // Login provides a mock function for the type UserClient
-func (_mock *UserClient) Login(ctx context.Context, req requests.LoginRequest, headers map[string]string) (responses.TokenResponse, errors.EdgeX) {
-	ret := _mock.Called(ctx, req, headers)
+func (_mock *UserClient) Login(ctx context.Context, req requests.LoginRequest) (responses.TokenResponse, errors.EdgeX) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Login")
+	}
+
+	var r0 responses.TokenResponse
+	var r1 errors.EdgeX
+	if returnFunc, ok := ret.Get(0).(func(context.Context, requests.LoginRequest) (responses.TokenResponse, errors.EdgeX)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, requests.LoginRequest) responses.TokenResponse); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(responses.TokenResponse)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, requests.LoginRequest) errors.EdgeX); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.EdgeX)
+		}
+	}
+	return r0, r1
+}
+
+// UserClient_Login_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Login'
+type UserClient_Login_Call struct {
+	*mock.Call
+}
+
+// Login is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req requests.LoginRequest
+func (_e *UserClient_Expecter) Login(ctx interface{}, req interface{}) *UserClient_Login_Call {
+	return &UserClient_Login_Call{Call: _e.mock.On("Login", ctx, req)}
+}
+
+func (_c *UserClient_Login_Call) Run(run func(ctx context.Context, req requests.LoginRequest)) *UserClient_Login_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 requests.LoginRequest
+		if args[1] != nil {
+			arg1 = args[1].(requests.LoginRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *UserClient_Login_Call) Return(tokenResponse responses.TokenResponse, edgeX errors.EdgeX) *UserClient_Login_Call {
+	_c.Call.Return(tokenResponse, edgeX)
+	return _c
+}
+
+func (_c *UserClient_Login_Call) RunAndReturn(run func(ctx context.Context, req requests.LoginRequest) (responses.TokenResponse, errors.EdgeX)) *UserClient_Login_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// LoginWithHeader provides a mock function for the type UserClient
+func (_mock *UserClient) LoginWithHeader(ctx context.Context, req requests.LoginRequest, headers map[string]string) (responses.TokenResponse, errors.EdgeX) {
+	ret := _mock.Called(ctx, req, headers)
+
+	if len(ret) == 0 {
+		panic("no return value specified for LoginWithHeader")
 	}
 
 	var r0 responses.TokenResponse
@@ -281,20 +349,20 @@ func (_mock *UserClient) Login(ctx context.Context, req requests.LoginRequest, h
 	return r0, r1
 }
 
-// UserClient_Login_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Login'
-type UserClient_Login_Call struct {
+// UserClient_LoginWithHeader_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LoginWithHeader'
+type UserClient_LoginWithHeader_Call struct {
 	*mock.Call
 }
 
-// Login is a helper method to define mock.On call
+// LoginWithHeader is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req requests.LoginRequest
 //   - headers map[string]string
-func (_e *UserClient_Expecter) Login(ctx interface{}, req interface{}, headers interface{}) *UserClient_Login_Call {
-	return &UserClient_Login_Call{Call: _e.mock.On("Login", ctx, req, headers)}
+func (_e *UserClient_Expecter) LoginWithHeader(ctx interface{}, req interface{}, headers interface{}) *UserClient_LoginWithHeader_Call {
+	return &UserClient_LoginWithHeader_Call{Call: _e.mock.On("LoginWithHeader", ctx, req, headers)}
 }
 
-func (_c *UserClient_Login_Call) Run(run func(ctx context.Context, req requests.LoginRequest, headers map[string]string)) *UserClient_Login_Call {
+func (_c *UserClient_LoginWithHeader_Call) Run(run func(ctx context.Context, req requests.LoginRequest, headers map[string]string)) *UserClient_LoginWithHeader_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -317,12 +385,12 @@ func (_c *UserClient_Login_Call) Run(run func(ctx context.Context, req requests.
 	return _c
 }
 
-func (_c *UserClient_Login_Call) Return(tokenResponse responses.TokenResponse, edgeX errors.EdgeX) *UserClient_Login_Call {
+func (_c *UserClient_LoginWithHeader_Call) Return(tokenResponse responses.TokenResponse, edgeX errors.EdgeX) *UserClient_LoginWithHeader_Call {
 	_c.Call.Return(tokenResponse, edgeX)
 	return _c
 }
 
-func (_c *UserClient_Login_Call) RunAndReturn(run func(ctx context.Context, req requests.LoginRequest, headers map[string]string) (responses.TokenResponse, errors.EdgeX)) *UserClient_Login_Call {
+func (_c *UserClient_LoginWithHeader_Call) RunAndReturn(run func(ctx context.Context, req requests.LoginRequest, headers map[string]string) (responses.TokenResponse, errors.EdgeX)) *UserClient_LoginWithHeader_Call {
 	_c.Call.Return(run)
 	return _c
 }
