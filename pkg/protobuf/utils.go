@@ -54,6 +54,14 @@ func ConvertEventToProtobuf(event dtos.Event) (*Event, error) {
 		pbEvent.Tags = jsonBytes
 	}
 
+	if len(event.Extensions) > 0 {
+		jsonBytes, err := json.Marshal(event.Extensions)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal extensions: %w", err)
+		}
+		pbEvent.Extensions = jsonBytes
+	}
+
 	return pbEvent, nil
 }
 
@@ -123,6 +131,14 @@ func convertReadingToProtobuf(reading dtos.BaseReading) (*Reading, error) {
 		pbReading.Tags = jsonBytes
 	}
 
+	if len(reading.Extensions) > 0 {
+		jsonBytes, err := json.Marshal(reading.Extensions)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal reading extensions: %w", err)
+		}
+		pbReading.Extensions = jsonBytes
+	}
+
 	return pbReading, nil
 }
 
@@ -142,6 +158,8 @@ func DecodeProtobufToEvent(data []byte) (*dtos.Event, error) {
 		ProfileName: pbEvent.GetProfileName(),
 		SourceName:  pbEvent.GetSourceName(),
 		Origin:      pbEvent.GetOrigin(),
+		Tags:        make(dtos.Tags),
+		Extensions:  make(map[string]any),
 	}
 
 	event.Readings = make([]dtos.BaseReading, len(pbEvent.GetReadings()))
@@ -159,6 +177,12 @@ func DecodeProtobufToEvent(data []byte) (*dtos.Event, error) {
 		}
 	}
 
+	if len(pbEvent.GetExtensions()) > 0 {
+		if err := json.Unmarshal(pbEvent.GetExtensions(), &event.Extensions); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal extensions: %w", err)
+		}
+	}
+
 	return event, nil
 }
 
@@ -172,11 +196,19 @@ func convertProtobufToReading(pbReading *Reading) (dtos.BaseReading, error) {
 		ProfileName:  pbReading.GetProfileName(),
 		ValueType:    pbReading.GetValueType(),
 		Units:        pbReading.GetUnits(),
+		Tags:         make(dtos.Tags),
+		Extensions:   make(map[string]any),
 	}
 
 	if len(pbReading.GetTags()) > 0 {
 		if err := json.Unmarshal(pbReading.GetTags(), &reading.Tags); err != nil {
 			return reading, fmt.Errorf("failed to unmarshal reading tags: %w", err)
+		}
+	}
+
+	if len(pbReading.GetExtensions()) > 0 {
+		if err := json.Unmarshal(pbReading.GetExtensions(), &reading.Extensions); err != nil {
+			return reading, fmt.Errorf("failed to unmarshal reading extensions: %w", err)
 		}
 	}
 
@@ -191,6 +223,7 @@ func convertProtobufToReading(pbReading *Reading) (dtos.BaseReading, error) {
 		nullReading.Origin = pbReading.GetOrigin()
 		nullReading.Units = pbReading.GetUnits()
 		nullReading.Tags = reading.Tags
+		nullReading.Extensions = reading.Extensions
 		return nullReading, nil
 	}
 

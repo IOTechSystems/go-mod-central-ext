@@ -6,7 +6,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.33.2
-// source: event.proto
+// source: pkg/protobuf/event.proto
 
 package protobuf
 
@@ -44,14 +44,17 @@ type Event struct {
 	Readings []*Reading `protobuf:"bytes,7,rep,name=readings,proto3" json:"readings,omitempty"`
 	// Tags attached to the Event which give more context to the Event
 	// Entire tags map is stored as JSON-encoded bytes
-	Tags          []byte `protobuf:"bytes,8,opt,name=tags,proto3,oneof" json:"tags,omitempty"`
+	Tags []byte `protobuf:"bytes,8,opt,name=tags,proto3,oneof" json:"tags,omitempty"`
+	// Extensions attached to the Event
+	// Entire extensions map is stored as JSON-encoded bytes
+	Extensions    []byte `protobuf:"bytes,9,opt,name=extensions,proto3,oneof" json:"extensions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Event) Reset() {
 	*x = Event{}
-	mi := &file_event_proto_msgTypes[0]
+	mi := &file_pkg_protobuf_event_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -63,7 +66,7 @@ func (x *Event) String() string {
 func (*Event) ProtoMessage() {}
 
 func (x *Event) ProtoReflect() protoreflect.Message {
-	mi := &file_event_proto_msgTypes[0]
+	mi := &file_pkg_protobuf_event_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -76,7 +79,7 @@ func (x *Event) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Event.ProtoReflect.Descriptor instead.
 func (*Event) Descriptor() ([]byte, []int) {
-	return file_event_proto_rawDescGZIP(), []int{0}
+	return file_pkg_protobuf_event_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Event) GetApiVersion() string {
@@ -135,6 +138,13 @@ func (x *Event) GetTags() []byte {
 	return nil
 }
 
+func (x *Event) GetExtensions() []byte {
+	if x != nil {
+		return x.Extensions
+	}
+	return nil
+}
+
 // Reading represents a single reading within an Event
 type Reading struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -168,14 +178,17 @@ type Reading struct {
 	// Numeric value is stored as MessagePack-encoded bytes
 	NumericValue []byte `protobuf:"bytes,13,opt,name=numeric_value,json=numericValue,proto3,oneof" json:"numeric_value,omitempty"`
 	// Indicates if the reading value is null
-	IsNull        *bool `protobuf:"varint,14,opt,name=is_null,json=isNull,proto3,oneof" json:"is_null,omitempty"`
+	IsNull *bool `protobuf:"varint,14,opt,name=is_null,json=isNull,proto3,oneof" json:"is_null,omitempty"`
+	// Extensions attached to the reading
+	// Entire extensions map is stored as JSON-encoded bytes
+	Extensions    []byte `protobuf:"bytes,15,opt,name=extensions,proto3,oneof" json:"extensions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Reading) Reset() {
 	*x = Reading{}
-	mi := &file_event_proto_msgTypes[1]
+	mi := &file_pkg_protobuf_event_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -187,7 +200,7 @@ func (x *Reading) String() string {
 func (*Reading) ProtoMessage() {}
 
 func (x *Reading) ProtoReflect() protoreflect.Message {
-	mi := &file_event_proto_msgTypes[1]
+	mi := &file_pkg_protobuf_event_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -200,7 +213,7 @@ func (x *Reading) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Reading.ProtoReflect.Descriptor instead.
 func (*Reading) Descriptor() ([]byte, []int) {
-	return file_event_proto_rawDescGZIP(), []int{1}
+	return file_pkg_protobuf_event_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Reading) GetId() string {
@@ -301,11 +314,18 @@ func (x *Reading) GetIsNull() bool {
 	return false
 }
 
-var File_event_proto protoreflect.FileDescriptor
+func (x *Reading) GetExtensions() []byte {
+	if x != nil {
+		return x.Extensions
+	}
+	return nil
+}
 
-const file_event_proto_rawDesc = "" +
+var File_pkg_protobuf_event_proto protoreflect.FileDescriptor
+
+const file_pkg_protobuf_event_proto_rawDesc = "" +
 	"\n" +
-	"\vevent.proto\x12\bprotobuf\"\xf7\x02\n" +
+	"\x18pkg/protobuf/event.proto\x12\bprotobuf\"\xab\x03\n" +
 	"\x05Event\x12$\n" +
 	"\vapi_version\x18\x01 \x01(\tH\x00R\n" +
 	"apiVersion\x88\x01\x01\x12\x13\n" +
@@ -317,14 +337,18 @@ const file_event_proto_rawDesc = "" +
 	"sourceName\x88\x01\x01\x12\x1b\n" +
 	"\x06origin\x18\x06 \x01(\x03H\x05R\x06origin\x88\x01\x01\x12-\n" +
 	"\breadings\x18\a \x03(\v2\x11.protobuf.ReadingR\breadings\x12\x17\n" +
-	"\x04tags\x18\b \x01(\fH\x06R\x04tags\x88\x01\x01B\x0e\n" +
+	"\x04tags\x18\b \x01(\fH\x06R\x04tags\x88\x01\x01\x12#\n" +
+	"\n" +
+	"extensions\x18\t \x01(\fH\aR\n" +
+	"extensions\x88\x01\x01B\x0e\n" +
 	"\f_api_versionB\x05\n" +
 	"\x03_idB\x0e\n" +
 	"\f_device_nameB\x0f\n" +
 	"\r_profile_nameB\x0e\n" +
 	"\f_source_nameB\t\n" +
 	"\a_originB\a\n" +
-	"\x05_tags\"\xa2\x05\n" +
+	"\x05_tagsB\r\n" +
+	"\v_extensions\"\xd6\x05\n" +
 	"\aReading\x12\x13\n" +
 	"\x02id\x18\x01 \x01(\tH\x00R\x02id\x88\x01\x01\x12\x1b\n" +
 	"\x06origin\x18\x02 \x01(\x03H\x01R\x06origin\x88\x01\x01\x12$\n" +
@@ -344,7 +368,10 @@ const file_event_proto_rawDesc = "" +
 	"R\tmediaType\x88\x01\x01\x12&\n" +
 	"\fobject_value\x18\f \x01(\fH\vR\vobjectValue\x88\x01\x01\x12(\n" +
 	"\rnumeric_value\x18\r \x01(\fH\fR\fnumericValue\x88\x01\x01\x12\x1c\n" +
-	"\ais_null\x18\x0e \x01(\bH\rR\x06isNull\x88\x01\x01B\x05\n" +
+	"\ais_null\x18\x0e \x01(\bH\rR\x06isNull\x88\x01\x01\x12#\n" +
+	"\n" +
+	"extensions\x18\x0f \x01(\fH\x0eR\n" +
+	"extensions\x88\x01\x01B\x05\n" +
 	"\x03_idB\t\n" +
 	"\a_originB\x0e\n" +
 	"\f_device_nameB\x10\n" +
@@ -359,26 +386,27 @@ const file_event_proto_rawDesc = "" +
 	"\r_object_valueB\x10\n" +
 	"\x0e_numeric_valueB\n" +
 	"\n" +
-	"\b_is_nullB=Z;github.com/IOTechSystems/go-mod-central-ext/v4/pkg/protobufb\x06proto3"
+	"\b_is_nullB\r\n" +
+	"\v_extensionsB=Z;github.com/IOTechSystems/go-mod-central-ext/v4/pkg/protobufb\x06proto3"
 
 var (
-	file_event_proto_rawDescOnce sync.Once
-	file_event_proto_rawDescData []byte
+	file_pkg_protobuf_event_proto_rawDescOnce sync.Once
+	file_pkg_protobuf_event_proto_rawDescData []byte
 )
 
-func file_event_proto_rawDescGZIP() []byte {
-	file_event_proto_rawDescOnce.Do(func() {
-		file_event_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_event_proto_rawDesc), len(file_event_proto_rawDesc)))
+func file_pkg_protobuf_event_proto_rawDescGZIP() []byte {
+	file_pkg_protobuf_event_proto_rawDescOnce.Do(func() {
+		file_pkg_protobuf_event_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_pkg_protobuf_event_proto_rawDesc), len(file_pkg_protobuf_event_proto_rawDesc)))
 	})
-	return file_event_proto_rawDescData
+	return file_pkg_protobuf_event_proto_rawDescData
 }
 
-var file_event_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_event_proto_goTypes = []any{
+var file_pkg_protobuf_event_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_pkg_protobuf_event_proto_goTypes = []any{
 	(*Event)(nil),   // 0: protobuf.Event
 	(*Reading)(nil), // 1: protobuf.Reading
 }
-var file_event_proto_depIdxs = []int32{
+var file_pkg_protobuf_event_proto_depIdxs = []int32{
 	1, // 0: protobuf.Event.readings:type_name -> protobuf.Reading
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
@@ -387,28 +415,28 @@ var file_event_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_event_proto_init() }
-func file_event_proto_init() {
-	if File_event_proto != nil {
+func init() { file_pkg_protobuf_event_proto_init() }
+func file_pkg_protobuf_event_proto_init() {
+	if File_pkg_protobuf_event_proto != nil {
 		return
 	}
-	file_event_proto_msgTypes[0].OneofWrappers = []any{}
-	file_event_proto_msgTypes[1].OneofWrappers = []any{}
+	file_pkg_protobuf_event_proto_msgTypes[0].OneofWrappers = []any{}
+	file_pkg_protobuf_event_proto_msgTypes[1].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_event_proto_rawDesc), len(file_event_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_protobuf_event_proto_rawDesc), len(file_pkg_protobuf_event_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_event_proto_goTypes,
-		DependencyIndexes: file_event_proto_depIdxs,
-		MessageInfos:      file_event_proto_msgTypes,
+		GoTypes:           file_pkg_protobuf_event_proto_goTypes,
+		DependencyIndexes: file_pkg_protobuf_event_proto_depIdxs,
+		MessageInfos:      file_pkg_protobuf_event_proto_msgTypes,
 	}.Build()
-	File_event_proto = out.File
-	file_event_proto_goTypes = nil
-	file_event_proto_depIdxs = nil
+	File_pkg_protobuf_event_proto = out.File
+	file_pkg_protobuf_event_proto_goTypes = nil
+	file_pkg_protobuf_event_proto_depIdxs = nil
 }

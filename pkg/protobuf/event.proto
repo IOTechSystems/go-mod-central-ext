@@ -34,6 +34,10 @@ message Event {
   // Tags attached to the Event which give more context to the Event
   // Entire tags map is stored as JSON-encoded bytes
   optional bytes tags = 8;
+
+  // Additional metadata attached to the Event
+  // Entire extensions map is stored as JSON-encoded bytes
+  optional bytes extensions = 9;
 }
 
 // Reading represents a single reading within an Event
@@ -82,4 +86,8 @@ message Reading {
 
   // Indicates if the reading value is null
   optional bool is_null = 14;
+
+  // Additional metadata attached to the Reading
+  // Entire extensions map is stored as JSON-encoded bytes
+  optional bytes extensions = 15;
 }
