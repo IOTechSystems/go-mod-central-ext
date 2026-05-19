@@ -142,6 +142,8 @@ func DecodeProtobufToEvent(data []byte) (*dtos.Event, error) {
 		ProfileName: pbEvent.GetProfileName(),
 		SourceName:  pbEvent.GetSourceName(),
 		Origin:      pbEvent.GetOrigin(),
+		Tags:        make(dtos.Tags),
+		Extensions:  make(map[string]any),
 	}
 
 	event.Readings = make([]dtos.BaseReading, len(pbEvent.GetReadings()))
@@ -172,6 +174,8 @@ func convertProtobufToReading(pbReading *Reading) (dtos.BaseReading, error) {
 		ProfileName:  pbReading.GetProfileName(),
 		ValueType:    pbReading.GetValueType(),
 		Units:        pbReading.GetUnits(),
+		Tags:         make(dtos.Tags),
+		Extensions:   make(map[string]any),
 	}
 
 	if len(pbReading.GetTags()) > 0 {
