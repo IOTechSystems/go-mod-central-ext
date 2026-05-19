@@ -3,11 +3,14 @@
 package xlsx
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/xrtmodels"
 	edgexCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/common"
 	edgexDtos "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"
@@ -29,6 +32,8 @@ func readStruct(structPtr any, headerCol []string, row []string, mapppingTable m
 		err = convertDTOStdTypeFields(&rowElement, row, headerCol, mapppingTable)
 	case reflect.TypeOf(edgexDtos.AutoEvent{}):
 		extraReturnedCols, err = convertAutoEventFields(&rowElement, row, headerCol, mapppingTable)
+	case reflect.TypeOf(xrtmodels.Schedule{}):
+		extraReturnedCols, err = convertScheduleFields(&rowElement, row, headerCol, mapppingTable)
 	case reflect.TypeOf(edgexDtos.Device{}):
 		err = convertDeviceFields(&rowElement, row, headerCol, mapppingTable)
 	case reflect.TypeOf(edgexDtos.DeviceCommand{}):
@@ -66,8 +71,9 @@ func setStdStructFieldValue(originValue string, field reflect.Value) errors.Edge
 	var fieldValue any
 	var err errors.EdgeX
 
-	// Handle the struct pointer field
-	if field.Kind() == reflect.Ptr {
+	switch {
+	case field.Kind() == reflect.Ptr:
+		// Handle the struct pointer field
 		if originValue == "" {
 			return nil
 		}
@@ -83,7 +89,18 @@ func setStdStructFieldValue(originValue string, field reflect.Value) errors.Edge
 		ptrValue.Elem().Set(reflect.ValueOf(fieldValue))
 		// Set the struct field to the pointer value
 		field.Set(ptrValue)
-	} else {
+	case field.Kind() == reflect.Map:
+		// Handle the map field by unmarshalling the cell value as JSON into the target map type
+		if originValue == "" {
+			return nil
+		}
+		mapPtr := reflect.New(field.Type())
+		if jsonErr := json.Unmarshal([]byte(originValue), mapPtr.Interface()); jsonErr != nil {
+			return errors.NewCommonEdgeX(errors.KindContractInvalid,
+				fmt.Sprintf("failed to unmarshal JSON cell '%s' to %s", originValue, field.Type()), jsonErr)
+		}
+		field.Set(mapPtr.Elem())
+	default:
 		fieldValue, err = parseCellToField(originValue, field.Kind())
 		if err != nil {
 			return errors.NewCommonEdgeXWrapper(err)
@@ -102,7 +119,13 @@ func parseCellToField(originValue string, kind reflect.Kind) (any, errors.EdgeX)
 	case reflect.String:
 		fieldValue = originValue
 	case reflect.Slice:
-		values := strings.Split(originValue, edgexCommon.CommaSeparator)
+		parts := strings.Split(originValue, edgexCommon.CommaSeparator)
+		values := make([]string, 0, len(parts))
+		for _, p := range parts {
+			if trimmed := strings.TrimSpace(p); trimmed != "" {
+				values = append(values, trimmed)
+			}
+		}
 		fieldValue = values
 	case reflect.Bool:
 		boolValue, err := strconv.ParseBool(originValue)
@@ -307,8 +330,17 @@ func convertAutoEventFields(rowElement *reflect.Value, xlsxRow []string, headerC
 	var deviceNames []string
 
 	for colIndex, cell := range xlsxRow {
-		headerName, field := getStructFieldByHeader(rowElement, colIndex, headerCol)
 		fieldValue := strings.TrimSpace(cell)
+
+		// cells past the header length are extra device names for multi-device rows
+		if colIndex >= len(headerCol) {
+			if fieldValue != "" {
+				deviceNames = append(deviceNames, fieldValue)
+			}
+			continue
+		}
+
+		headerName, field := getStructFieldByHeader(rowElement, colIndex, headerCol)
 		if fieldValue == "" {
 			// set fieldValue to 'default value' defined in mapping Table if not empty
 			if mapping, ok := fieldMappings[headerName]; ok && mapping.defaultValue != "" {
@@ -323,14 +355,81 @@ func convertAutoEventFields(rowElement *reflect.Value, xlsxRow []string, headerC
 				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("error occurred on '%s' column", headerName), err)
 			}
 		} else {
-			// the cell belongs to the "Reference Device Name" column, append it to deviceNames
-			if fieldValue != "" {
+			// only collect the cell as a device name when the column is the "Reference Device Name" column
+			if fieldValue != "" && strings.EqualFold(headerName, refDeviceName) {
 				deviceNames = append(deviceNames, fieldValue)
 			}
 		}
 	}
 
 	return deviceNames, nil
+}
+
+// convertScheduleFields convert the xlsx row to the Schedule DTO
+func convertScheduleFields(rowElement *reflect.Value, xlsxRow []string, headerCol []string, fieldMappings map[string]mappingField) ([]string, errors.EdgeX) {
+	if fieldMappings == nil {
+		return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, "fieldMappings not defined while converting Schedule fields", nil)
+	}
+	var deviceNames []string
+
+	for colIndex, cell := range xlsxRow {
+		fieldValue := strings.TrimSpace(cell)
+
+		// cells past the header length are extra device names for multi-device rows
+		if colIndex >= len(headerCol) {
+			if fieldValue != "" {
+				deviceNames = append(deviceNames, fieldValue)
+			}
+			continue
+		}
+
+		headerName, field := getStructFieldByHeader(rowElement, colIndex, headerCol)
+		if fieldValue == "" {
+			// set fieldValue to 'default value' defined in mapping Table if not empty
+			if mapping, ok := fieldMappings[headerName]; ok && mapping.defaultValue != "" {
+				fieldValue = mapping.defaultValue
+			}
+		}
+
+		if field.Kind() != reflect.Invalid {
+			// the Schedule Interval field is a uint64 in microseconds, but xlsx stores a duration string like "1s"
+			if strings.EqualFold(headerName, edgexCommon.Interval) && field.Kind() == reflect.Uint64 {
+				if fieldValue == "" {
+					continue
+				}
+				interval, err := parseScheduleInterval(fieldValue)
+				if err != nil {
+					return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("error occurred on '%s' column", headerName), err)
+				}
+				field.SetUint(interval)
+				continue
+			}
+
+			err := setStdStructFieldValue(fieldValue, field)
+			if err != nil {
+				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("error occurred on '%s' column", headerName), err)
+			}
+		} else {
+			// only collect the cell as a device name when the column is the "Reference Device Name" column
+			if fieldValue != "" && strings.EqualFold(headerName, refDeviceName) {
+				deviceNames = append(deviceNames, fieldValue)
+			}
+		}
+	}
+
+	return deviceNames, nil
+}
+
+// parseScheduleInterval parses a duration string (e.g. "1s") and returns microseconds as uint64
+func parseScheduleInterval(interval string) (uint64, errors.EdgeX) {
+	duration, err := time.ParseDuration(interval)
+	if err != nil {
+		return 0, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid interval '%s'", interval), err)
+	}
+	if duration < 0 {
+		return 0, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("interval '%s' must not be negative", interval), nil)
+	}
+	return uint64(duration.Microseconds()), nil // #nosec G115
 }
 
 // convertDeviceCommandFields convert the xlsx row to the DeviceCommand DTO

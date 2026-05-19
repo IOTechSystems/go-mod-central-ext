@@ -7,7 +7,7 @@ package xrtmodels
 type Schedule struct {
 	Name     string             `json:"name"`
 	Device   string             `json:"device"`
-	Resource []string           `json:"resource"`
+	Resource []string           `json:"resource" validate:"required,min=1,dive,required"`
 	Interval uint64             `json:"interval,omitempty"`
 	OnChange bool               `json:"on_change"`
 	Bounds   map[string]float64 `json:"bounds"`

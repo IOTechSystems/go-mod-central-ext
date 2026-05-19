@@ -7,6 +7,7 @@ const (
 	devicesSheetName        = "Devices"
 	mappingTableSheetName   = "MappingTable"
 	autoEventsSheetName     = "AutoEvents"
+	schedulesSheetName      = "Schedules"
 	deviceInfoSheetName     = "DeviceInfo"
 	deviceResourceSheetName = "DeviceResource"
 	deviceCommandSheetName  = "DeviceCommand"
@@ -25,6 +26,7 @@ const (
 	protocols    = "Protocols"
 	protocolName = "ProtocolName"
 	autoEvents   = "AutoEvents"
+	schedules    = "Schedules"
 	tags         = "Tags"
 )
 

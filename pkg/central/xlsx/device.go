@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/common"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/xrtmodels"
 	edgexCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/common"
 	edgexDtos "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"
-
 	"github.com/xuri/excelize/v2"
 )
 
@@ -29,7 +29,8 @@ type baseXlsx struct {
 // deviceXlsx stores the worksheets processed result and the converted Device DTOs
 type deviceXlsx struct {
 	baseXlsx
-	devices []*edgexDtos.Device
+	devices            []*edgexDtos.Device
+	deviceSchedulesMap map[string][]xrtmodels.Schedule
 }
 
 func newDeviceXlsx(file io.Reader) (Converter[[]*edgexDtos.Device], errors.EdgeX) {
@@ -49,6 +50,7 @@ func newDeviceXlsx(file io.Reader) (Converter[[]*edgexDtos.Device], errors.EdgeX
 			fieldMappings:  fieldMappings,
 			validateErrors: make(map[string]error),
 		},
+		deviceSchedulesMap: make(map[string][]xrtmodels.Schedule),
 	}, nil
 }
 
@@ -123,6 +125,13 @@ func (deviceXlsx *deviceXlsx) ConvertToDTO() errors.EdgeX {
 		}
 	}
 
+	if slices.Contains(allSheetNames, schedulesSheetName) {
+		err = deviceXlsx.convertSchedules()
+		if err != nil {
+			return errors.NewCommonEdgeXWrapper(err)
+		}
+	}
+
 	return nil
 }
 
@@ -132,8 +141,8 @@ func (deviceXlsx *deviceXlsx) parseDevicesHeader(header *[]string, rowCount int)
 	colCount := len(*header)
 
 	for objectField, mapping := range deviceXlsx.fieldMappings {
-		if startsWithAutoEvents(mapping.path) {
-			// if the mapping path starts with autoEvents, skip the check of the Devices sheet header column
+		if startsWithAutoEvents(mapping.path) || startsWithSchedules(mapping.path) {
+			// if the mapping path starts with autoEvents or schedules, skip the check of the Devices sheet header column
 			continue
 		}
 
@@ -170,10 +179,12 @@ func (deviceXlsx *deviceXlsx) convertAutoEvents() errors.EdgeX {
 
 		// AutoEvents sheet should at least define 2 columns in the header row (SourceName and Reference Device Name)
 		if colCount < 2 {
-			err = deviceXlsx.parseAutoEventsHeader(header, len(rows))
-			if err != nil {
-				return errors.NewCommonEdgeX(errors.KindServerError, fmt.Sprintf("failed to parse the header row from %s worksheet", autoEventsSheetName), err)
-			}
+			return errors.NewCommonEdgeX(errors.KindContractInvalid,
+				fmt.Sprintf("%s sheet should define at least 2 columns (SourceName and Reference Device Name)", autoEventsSheetName), nil)
+		}
+		err = deviceXlsx.parseAutoEventsHeader(header, len(rows))
+		if err != nil {
+			return errors.NewCommonEdgeX(errors.KindServerError, fmt.Sprintf("failed to parse the header row from %s worksheet", autoEventsSheetName), err)
 		}
 	} else {
 		return nil
@@ -183,6 +194,8 @@ func (deviceXlsx *deviceXlsx) convertAutoEvents() errors.EdgeX {
 	if err != nil {
 		return errors.NewCommonEdgeX(errors.KindServerError, fmt.Sprintf("failed to retrieve all rows from %s worksheet", autoEventsSheetName), err)
 	}
+	// refresh header so readStruct sees any columns inserted by parseAutoEventsHeader
+	header = rows[0]
 
 OUTER:
 	// parse the device data rows
@@ -230,6 +243,93 @@ OUTER:
 	return nil
 }
 
+// convertSchedules parses the Schedules sheet and convert the rows to Schedule DTOs
+func (deviceXlsx *deviceXlsx) convertSchedules() errors.EdgeX {
+	var header []string
+	xlsFile := deviceXlsx.xlsFile
+
+	rows, err := xlsFile.GetRows(schedulesSheetName)
+	if err != nil {
+		return errors.NewCommonEdgeX(errors.KindServerError, fmt.Sprintf("failed to retrieve all rows from %s worksheet", schedulesSheetName), err)
+	}
+
+	// checks at least 2 rows exists in the Schedules sheet (1 header and 1 data row)
+	// and parses the header row
+	if len(rows) >= 2 {
+		header = rows[0]
+		colCount := len(header)
+
+		// Schedules sheet should at least define 2 columns in the header row (Interval and Reference Device Name)
+		if colCount < 2 {
+			return errors.NewCommonEdgeX(errors.KindContractInvalid,
+				fmt.Sprintf("%s sheet should define at least 2 columns (Interval and Reference Device Name)", schedulesSheetName), nil)
+		}
+		err = deviceXlsx.parseSchedulesHeader(header, len(rows))
+		if err != nil {
+			return errors.NewCommonEdgeX(errors.KindServerError, fmt.Sprintf("failed to parse the header row from %s worksheet", schedulesSheetName), err)
+		}
+	} else {
+		return nil
+	}
+
+	// re-read rows because parseSchedulesHeader may have inserted missing columns with default values
+	rows, err = xlsFile.GetRows(schedulesSheetName)
+	if err != nil {
+		return errors.NewCommonEdgeX(errors.KindServerError, fmt.Sprintf("failed to retrieve all rows from %s worksheet", schedulesSheetName), err)
+	}
+	// refresh header so readStruct sees any columns inserted by parseSchedulesHeader
+	header = rows[0]
+
+OUTER:
+	// parse the schedule data rows
+	for rowIndex, row := range rows {
+		if rowIndex == 0 {
+			continue
+		}
+
+		schedule := xrtmodels.Schedule{}
+		deviceNameResult, edgexErr := readStruct(&schedule, header, row, deviceXlsx.fieldMappings)
+		if edgexErr != nil {
+			return errors.NewCommonEdgeX(errors.KindContractInvalid, "failed to unmarshal an excel row into Schedule DTO", edgexErr)
+		}
+
+		deviceNames, ok := deviceNameResult.([]string)
+		if !ok {
+			return errors.NewCommonEdgeX(errors.KindContractInvalid,
+				fmt.Sprintf("failed to obtain the 'Reference Device Name' cell of the xlsx row from %s worksheet", schedulesSheetName), nil)
+		}
+
+		// validate the Schedule DTO
+		err = edgexCommon.Validate(schedule)
+		if err != nil {
+			for _, deviceName := range deviceNames {
+				// find the matched device DTO index equals to the "Reference Device Name" on the Schedules row
+				idx := slices.IndexFunc(deviceXlsx.devices, func(d *edgexDtos.Device) bool { return d.Name == deviceName })
+				if idx > -1 {
+					// delete the device element in deviceXlsx.devices slice if the referenced Schedule failed validation
+					deviceXlsx.devices = slices.Delete(deviceXlsx.devices, idx, idx+1)
+					deviceXlsx.validateErrors[deviceName] = err
+					// drop any schedules already accumulated for this device so callers cannot retrieve stale entries
+					delete(deviceXlsx.deviceSchedulesMap, deviceName)
+				}
+			}
+			continue OUTER
+		}
+
+		for _, deviceName := range deviceNames {
+			for _, device := range deviceXlsx.devices {
+				if deviceName == device.Name {
+					scheduleCopy := schedule
+					scheduleCopy.Device = deviceName
+					deviceXlsx.deviceSchedulesMap[deviceName] = append(deviceXlsx.deviceSchedulesMap[deviceName], scheduleCopy)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func (deviceXlsx *deviceXlsx) parseAutoEventsHeader(header []string, rowCount int) errors.EdgeX {
 	var err error
 	colCount := len(header)
@@ -252,13 +352,45 @@ func (deviceXlsx *deviceXlsx) parseAutoEventsHeader(header []string, rowCount in
 	return nil
 }
 
+func (deviceXlsx *deviceXlsx) parseSchedulesHeader(header []string, rowCount int) errors.EdgeX {
+	var err error
+	colCount := len(header)
+	newColCount := &colCount
+
+	for objectField, mapping := range deviceXlsx.fieldMappings {
+		if !startsWithSchedules(mapping.path) {
+			// if the mapping path doesn't start with schedules, skip the check of the Schedules sheet header column
+			continue
+		}
+
+		// check if the mapping object is defined in the Schedules sheet if the defaultValue is not empty
+		// if not, insert the mapping object as a new column in the Schedules sheet with defaultValue set in each data row
+		err = checkMappingObject(deviceXlsx.xlsFile, schedulesSheetName, newColCount, rowCount, mapping.defaultValue, objectField, &header)
+		if err != nil {
+			return errors.NewCommonEdgeX(errors.KindContractInvalid, "failed to check mapping object", err)
+		}
+	}
+
+	return nil
+}
+
 // startsWithAutoEvents checks if the path name defined in MappingTable sheet starts with autoEvents
 func startsWithAutoEvents(path string) bool {
 	return strings.HasPrefix(strings.ToLower(path), strings.ToLower(autoEvents))
 }
 
+// startsWithSchedules checks if the path name defined in MappingTable sheet starts with schedules
+func startsWithSchedules(path string) bool {
+	return strings.HasPrefix(strings.ToLower(path), strings.ToLower(schedules))
+}
+
 func (deviceXlsx *deviceXlsx) GetDTOs() []*edgexDtos.Device {
 	return deviceXlsx.devices
+}
+
+// GetSchedulesByDeviceName returns all parsed Schedules associated with the given device name
+func (deviceXlsx *deviceXlsx) GetSchedulesByDeviceName(name string) []xrtmodels.Schedule {
+	return deviceXlsx.deviceSchedulesMap[name]
 }
 
 func (deviceXlsx *deviceXlsx) GetValidateErrors() map[string]error {
