@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/common"
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/xrtmodels"
 	edgexDtos "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos"
 
 	"github.com/stretchr/testify/require"
@@ -219,6 +220,83 @@ func Test_convertAutoEventFields(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_convertScheduleFields(t *testing.T) {
+	deviceX, err := createScheduleDeviceXlsxInst()
+	require.NoError(t, err)
+	validMappings := deviceX.(*deviceXlsx).fieldMappings
+
+	t.Run("RefDeviceName as last header collects extra device names via fallback", func(t *testing.T) {
+		rowElement := reflect.New(reflect.TypeOf(xrtmodels.Schedule{})).Elem()
+		header := []string{"Interval", refDeviceName}
+		// row has more cells than header: cells past last header fall back to refDeviceName
+		row := []string{"1s", "Sensor0001", "Sensor0002"}
+
+		deviceNames, err := convertScheduleFields(&rowElement, row, header, validMappings)
+		require.NoError(t, err)
+		require.Equal(t, []string{"Sensor0001", "Sensor0002"}, deviceNames)
+	})
+
+	t.Run("non-refDeviceName unmapped column is ignored", func(t *testing.T) {
+		rowElement := reflect.New(reflect.TypeOf(xrtmodels.Schedule{})).Elem()
+		header := []string{"Interval", refDeviceName, "Note"}
+		row := []string{"1s", "Sensor0001", "irrelevant"}
+
+		deviceNames, err := convertScheduleFields(&rowElement, row, header, validMappings)
+		require.NoError(t, err)
+		require.Equal(t, []string{"Sensor0001"}, deviceNames)
+	})
+
+	t.Run("nil fieldMappings returns error", func(t *testing.T) {
+		rowElement := reflect.New(reflect.TypeOf(xrtmodels.Schedule{})).Elem()
+		_, err := convertScheduleFields(&rowElement, []string{"1s", "Sensor0001"}, []string{"Interval", refDeviceName}, nil)
+		require.Error(t, err)
+	})
+}
+
+func Test_convertScheduleFields_MultiDeviceNamesAfterInsertedColumn(t *testing.T) {
+	// simulate post-insertion state: parseSchedulesHeader appended "InsertedCol" so RefDeviceName is no longer last.
+	// row still extends past header to provide a second device name; both must still be collected.
+	deviceX, err := createScheduleDeviceXlsxInst()
+	require.NoError(t, err)
+	validMappings := deviceX.(*deviceXlsx).fieldMappings
+
+	rowElement := reflect.New(reflect.TypeOf(xrtmodels.Schedule{})).Elem()
+	header := []string{"Interval", refDeviceName, "InsertedCol"}
+	row := []string{"1s", "Sensor0001", "default-value", "Sensor0002"}
+
+	deviceNames, err := convertScheduleFields(&rowElement, row, header, validMappings)
+	require.NoError(t, err)
+	require.Equal(t, []string{"Sensor0001", "Sensor0002"}, deviceNames)
+}
+
+func Test_convertAutoEventFields_MultiDeviceNamesAfterInsertedColumn(t *testing.T) {
+	deviceX, err := createDeviceXlsxInst()
+	require.NoError(t, err)
+	validMappings := deviceX.(*deviceXlsx).fieldMappings
+
+	rowElement := reflect.New(reflect.TypeOf(edgexDtos.AutoEvent{})).Elem()
+	header := []string{"Interval", "OnChange", "SourceName", refDeviceName, "InsertedCol"}
+	row := []string{"1s", "true", "temperature", "Sensor0001", "default-value", "Sensor0002"}
+
+	deviceNames, err := convertAutoEventFields(&rowElement, row, header, validMappings)
+	require.NoError(t, err)
+	require.Equal(t, []string{"Sensor0001", "Sensor0002"}, deviceNames)
+}
+
+func Test_convertAutoEventFields_IgnoresUnmappedColumns(t *testing.T) {
+	deviceX, err := createDeviceXlsxInst()
+	require.NoError(t, err)
+	validMappings := deviceX.(*deviceXlsx).fieldMappings
+
+	rowElement := reflect.New(reflect.TypeOf(edgexDtos.AutoEvent{})).Elem()
+	header := []string{"Interval", "OnChange", "SourceName", refDeviceName, "Note"}
+	row := []string{"1s", "true", "temperature", "Sensor0001", "irrelevant"}
+
+	deviceNames, err := convertAutoEventFields(&rowElement, row, header, validMappings)
+	require.NoError(t, err)
+	require.Equal(t, []string{"Sensor0001"}, deviceNames)
 }
 
 func Test_convertDeviceCommandFields(t *testing.T) {

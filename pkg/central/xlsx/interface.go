@@ -1,10 +1,11 @@
-// Copyright (C) 2023-2024 IOTech Ltd
+// Copyright (C) 2023-2026 IOTech Ltd
 
 package xlsx
 
 import (
 	"io"
 
+	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/xrtmodels"
 	edgexDtos "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"
 )
@@ -20,6 +21,24 @@ type Converter[T AllowedDTOTypes] interface {
 	GetDTOs() T
 	// GetValidateErrors returns the deviceName-validationError key-value map while parsing the excel data rows to DTOs
 	GetValidateErrors() map[string]error
+}
+
+// DeviceScheduleReader exposes Schedules parsed from a device xlsx, looked up by device name.
+// A Converter[[]*edgexDtos.Device] returned from ConvertDeviceXlsx implements this interface;
+// callers should type-assert to access it.
+//
+// Example:
+//
+//	deviceXlsx, edgexErr := xlsx.ConvertDeviceXlsx(f) // ConvertDeviceXlsx already runs ConvertToDTO internally
+//	if edgexErr != nil { /* handle */ }
+//
+//	scheduleReader := deviceXlsx.(xlsx.DeviceScheduleReader)
+//	for _, device := range deviceXlsx.GetDTOs() {
+//	    schedules := scheduleReader.GetSchedulesByDeviceName(device.Name)
+//	    // send schedules to XRT, etc.
+//	}
+type DeviceScheduleReader interface {
+	GetSchedulesByDeviceName(name string) []xrtmodels.Schedule
 }
 
 type AllowedDTOConverterTypes interface {
