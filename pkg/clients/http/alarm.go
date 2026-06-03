@@ -15,7 +15,8 @@ import (
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"
 )
 
-const defaultMaxLimit = "100"
+// unlimitedLimit tells support-alarm to return all items (no maximum).
+const unlimitedLimit = "-1"
 
 // AlarmClient encapsulates HTTP operations against the support-alarm service.
 type AlarmClient struct {
@@ -180,7 +181,7 @@ func (c *AlarmClient) AddRoute(ctx context.Context, data []byte) errors.EdgeX {
 func (c *AlarmClient) queryAll(ctx context.Context, apiRoute string) (map[string]any, errors.EdgeX) {
 	params := url.Values{}
 	params.Set(pkgCommon.Offset, "0")
-	params.Set(pkgCommon.Limit, defaultMaxLimit) // TODO use -1 if the alarm service supports it
+	params.Set(pkgCommon.Limit, unlimitedLimit)
 	var res map[string]any
 	err := utils.GetRequest(ctx, &res, c.baseUrl, apiRoute, params, c.authInjector)
 	if err != nil {
