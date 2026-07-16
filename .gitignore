@@ -5,3 +5,6 @@ glide.lock
 coverage.out
 *.DS_Store
 VERSION
+
+# Claude Code
+CLAUDE.local.md
