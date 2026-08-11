@@ -36,3 +36,24 @@ func TestScheduleReadResponse_Unmarshal(t *testing.T) {
 	assert.Equal(t, "s1", resp.Result.Schedule.Name)
 	assert.Equal(t, "d1", resp.Result.Schedule.Device)
 }
+
+// Batch add and delete report per-item status while the envelope stays successful, so a
+// failed item must always carry an error — treating one as success would report a failure
+// as done.
+func TestNewBatchItemResult(t *testing.T) {
+	t.Run("every non-zero status carries an error", func(t *testing.T) {
+		// Includes codes BaseResult has no specific mapping for.
+		for _, status := range []int{1, 3, 6, 7, 10, 13, 500, 9999} {
+			result := NewBatchItemResult("dev-1", BaseResult{Status: status, ErrorMessage: "something went wrong"})
+			assert.True(t, result.Failed(), "status %d", status)
+			assert.Error(t, result.Err, "status %d", status)
+		}
+	})
+
+	t.Run("a zero status carries no error", func(t *testing.T) {
+		result := NewBatchItemResult("dev-1", BaseResult{})
+		assert.False(t, result.Failed())
+		assert.NoError(t, result.Err)
+		assert.Equal(t, "dev-1", result.Name)
+	})
+}

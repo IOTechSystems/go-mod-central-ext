@@ -4,6 +4,7 @@ package xrtmodels
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	edgexDtos "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos"
@@ -151,4 +152,145 @@ func TestNewScheduleUpdateRequest_ScheduleField(t *testing.T) {
 	data, err := json.Marshal(req)
 	require.NoError(t, err)
 	assert.Contains(t, string(data), `"sched1"`)
+}
+
+// The batch selector is one-of and every field is omitempty, because XRT treats a request
+// with no selector as "all" — a zero-valued field must not be sent as an empty selector.
+func TestNewBatchRequests(t *testing.T) {
+	const client = "test-client"
+
+	t.Run("read devices", func(t *testing.T) {
+		tests := []struct {
+			name    string
+			names   []string
+			pattern string
+			expect  map[string]any
+		}{
+			{"no argument selects all", nil, "", map[string]any{}},
+			{"by names", []string{"a", "b"}, "", map[string]any{"devices": []any{"a", "b"}}},
+			{"by pattern", nil, ".*", map[string]any{"pattern": ".*"}},
+		}
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				request := NewBatchReadDevicesRequest(tc.names, tc.pattern, client)
+				assertBatchRequest(t, request, request.BaseRequest, BatchReadDevicesOperation, tc.expect)
+			})
+		}
+	})
+
+	t.Run("delete devices", func(t *testing.T) {
+		request := NewBatchDeleteDevicesRequest([]string{"a"}, client)
+		assertBatchRequest(t, request, request.BaseRequest, BatchDeleteDevicesOperation,
+			map[string]any{"devices": []any{"a"}})
+	})
+
+	t.Run("read schedules", func(t *testing.T) {
+		request := NewBatchReadSchedulesRequest(nil, "dev-1", "", client)
+		assertBatchRequest(t, request, request.BaseRequest, BatchReadSchedulesOperation,
+			map[string]any{"device": "dev-1"})
+	})
+
+	// Delete offers no pattern and no "all", so the selector cannot express either.
+	t.Run("delete schedules by names", func(t *testing.T) {
+		request := NewBatchDeleteSchedulesRequest([]string{"s1"}, "", client)
+		assertBatchRequest(t, request, request.BaseRequest, BatchDeleteSchedulesOperation,
+			map[string]any{"schedules": []any{"s1"}})
+	})
+
+	t.Run("add requests carry their payload", func(t *testing.T) {
+		devices := NewBatchAddDevicesRequest([]DeviceInfo{{Device: edgexDtos.Device{Name: "a"}}}, client)
+		if devices.Op != BatchAddDevicesOperation || len(devices.Devices) != 1 {
+			t.Errorf("got %+v, want one device for %s", devices, BatchAddDevicesOperation)
+		}
+		schedules := NewBatchAddSchedulesRequest([]Schedule{{Name: "s1"}}, client)
+		if schedules.Op != BatchAddSchedulesOperation || len(schedules.Schedules) != 1 {
+			t.Errorf("got %+v, want one schedule for %s", schedules, BatchAddSchedulesOperation)
+		}
+	})
+}
+
+// assertBatchRequest checks the operation and that exactly the expected selector fields
+// are present on the wire. The request is taken as any so it serves both the device and
+// schedule request types.
+func assertBatchRequest(t *testing.T, request any, base BaseRequest, expectedOp string, expectedFields map[string]any) {
+	t.Helper()
+
+	if base.Op != expectedOp {
+		t.Errorf("op: got %q, want %q", base.Op, expectedOp)
+	}
+	if base.RequestId == "" || base.Client == "" {
+		t.Errorf("request must carry a client and request id, got %+v", base)
+	}
+
+	encoded, err := json.Marshal(request)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var decoded map[string]any
+	if err := json.Unmarshal(encoded, &decoded); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, field := range []string{"devices", "schedules", "device", "pattern"} {
+		got, present := decoded[field]
+		want, expected := expectedFields[field]
+		if expected != present {
+			t.Errorf("field %q: present=%v, want present=%v", field, present, expected)
+			continue
+		}
+		if expected && !reflect.DeepEqual(got, want) {
+			t.Errorf("field %q: got %v, want %v", field, got, want)
+		}
+	}
+}
+
+// The add_batch item name is derived from the device, so it cannot disagree with the
+// device info XRT receives alongside it.
+func TestNewBatchAddDevicesRequestDerivesTheName(t *testing.T) {
+	devices := []DeviceInfo{
+		{Device: edgexDtos.Device{Name: "dev-1", ProfileName: "p"}},
+		{Device: edgexDtos.Device{Name: "dev-2", ProfileName: "p"}},
+	}
+
+	request := NewBatchAddDevicesRequest(devices, "test-client")
+
+	if len(request.Devices) != len(devices) {
+		t.Fatalf("got %d items, want %d", len(request.Devices), len(devices))
+	}
+	for i, item := range request.Devices {
+		if item.DeviceName != devices[i].Name {
+			t.Errorf("[%d] name: got %q, want %q", i, item.DeviceName, devices[i].Name)
+		}
+		if item.DeviceInfo.Name != devices[i].Name {
+			t.Errorf("[%d] info name: got %q, want %q", i, item.DeviceInfo.Name, devices[i].Name)
+		}
+	}
+}
+
+// Both add operations must put the same shape on the wire for an empty payload; XRT does
+// not define whether null and [] are equivalent, so neither constructor should emit null.
+func TestBatchAddRequestsEncodeEmptyPayloadConsistently(t *testing.T) {
+	tests := []struct {
+		name    string
+		request any
+		field   string
+	}{
+		{"devices", NewBatchAddDevicesRequest(nil, "c"), "devices"},
+		{"schedules", NewBatchAddSchedulesRequest(nil, "c"), "schedules"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			encoded, err := json.Marshal(tc.request)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			var decoded map[string]json.RawMessage
+			if err := json.Unmarshal(encoded, &decoded); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if got := string(decoded[tc.field]); got != "[]" {
+				t.Errorf("%s: got %s, want []", tc.field, got)
+			}
+		})
+	}
 }
