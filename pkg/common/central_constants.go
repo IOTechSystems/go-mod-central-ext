@@ -16,6 +16,13 @@ const (
 	ProfileScanOptions        = IOTechPrefix + "ProfileScanOptions"
 	ProfileScanOptionCopyTags = IOTechPrefix + "CopyTags"
 
+	// BACnetAddressByIP stores the discovered BACnet devices with an explicit IP address and port
+	// instead of the Instance ID, which is the default when this is unset. Only applies to BACnet-IP devices.
+	BACnetAddressByIP = IOTechPrefix + "BACnetAddressByIP"
+
+	// DevicePropertyIP is the IP address reported by the XRT in the discovered device properties.
+	DevicePropertyIP = "IP"
+
 	TransformScript = IOTechPrefix + "TransformScript"
 )
 
