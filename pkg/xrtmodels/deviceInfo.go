@@ -15,6 +15,13 @@ import (
 
 type DeviceInfo struct {
 	edgexDtos.Device
+	// Operational reports whether XRT can currently reach the device. XRT sets it on
+	// device:read and device:read_batch; it is omitempty because ToXrtDevice builds
+	// outbound requests through this type, where the field has no meaning.
+	//
+	// This is distinct from the embedded OperatingState, which is EdgeX's own
+	// administrative view and is not populated by XRT.
+	Operational bool `json:"operational,omitempty"`
 }
 
 // ToEdgeXV2Device converts the XRT model to EdgeX v2 model

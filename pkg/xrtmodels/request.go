@@ -30,6 +30,14 @@ const (
 	ScheduleReadOperation   = "schedule:read"
 	ScheduleUpdateOperation = "schedule:update"
 
+	BatchReadDevicesOperation   = "device:read_batch"
+	BatchAddDevicesOperation    = "device:add_batch"
+	BatchDeleteDevicesOperation = "device:delete_batch"
+
+	BatchReadSchedulesOperation   = "schedule:read_batch"
+	BatchAddSchedulesOperation    = "schedule:add_batch"
+	BatchDeleteSchedulesOperation = "schedule:delete_batch"
+
 	DiscoveryTriggerOperation = "discovery:trigger"
 
 	ComponentUpdateOperation    = "component:update"
@@ -408,4 +416,130 @@ func NewDiscoveryRequest(clientName string, options map[string]interface{}) Disc
 		Options: options,
 	}
 	return req
+}
+
+// BatchReadDevicesRequest is the request body for device:read_batch. Both fields are
+// omitempty because an absent argument selects every device.
+type BatchReadDevicesRequest struct {
+	BaseRequest `json:",inline"`
+	Devices     []string `json:"devices,omitempty"`
+	Pattern     string   `json:"pattern,omitempty"`
+}
+
+// BatchDeleteDevicesRequest is the request body for device:delete_batch, which names its
+// targets: the specification offers neither a pattern nor a way to delete every device.
+type BatchDeleteDevicesRequest struct {
+	BaseRequest `json:",inline"`
+	Devices     []string `json:"devices"`
+}
+
+// BatchAddDevicesRequest repeats the shape of a single device:add.
+type BatchAddDevicesRequest struct {
+	BaseRequest `json:",inline"`
+	Devices     []BatchAddDeviceItem `json:"devices"`
+}
+
+// BatchAddDeviceItem is one device in a device:add_batch request, carrying the same
+// name/info pair a single device:add sends.
+type BatchAddDeviceItem struct {
+	DeviceName string     `json:"device"`
+	DeviceInfo DeviceInfo `json:"device_info"`
+}
+
+// NewBatchReadDevicesRequest builds a device:read_batch request. The specification makes
+// the argument a one-of; this constructor does not validate the selector, so callers must
+// leave devices and pattern empty to select everything and set at most one of them otherwise.
+func NewBatchReadDevicesRequest(deviceNames []string, pattern, clientName string) BatchReadDevicesRequest {
+	if deviceNames == nil {
+		deviceNames = []string{}
+	}
+	return BatchReadDevicesRequest{
+		BaseRequest: NewBaseRequest(BatchReadDevicesOperation, clientName),
+		Devices:     deviceNames,
+		Pattern:     pattern,
+	}
+}
+
+// NewBatchAddDevicesRequest builds a device:add_batch request. XRT expects each device as
+// a name/info pair; the name is taken from the device itself so the two cannot disagree.
+func NewBatchAddDevicesRequest(devices []DeviceInfo, clientName string) BatchAddDevicesRequest {
+	items := make([]BatchAddDeviceItem, 0, len(devices))
+	for _, device := range devices {
+		items = append(items, BatchAddDeviceItem{DeviceName: device.Name, DeviceInfo: device})
+	}
+	return BatchAddDevicesRequest{
+		BaseRequest: NewBaseRequest(BatchAddDevicesOperation, clientName),
+		Devices:     items,
+	}
+}
+
+// NewBatchDeleteDevicesRequest builds a device:delete_batch request.
+func NewBatchDeleteDevicesRequest(deviceNames []string, clientName string) BatchDeleteDevicesRequest {
+	if deviceNames == nil {
+		deviceNames = []string{}
+	}
+	return BatchDeleteDevicesRequest{
+		BaseRequest: NewBaseRequest(BatchDeleteDevicesOperation, clientName),
+		Devices:     deviceNames,
+	}
+}
+
+// BatchReadSchedulesRequest is the request body for schedule:read_batch. Every field is
+// omitempty because an absent argument selects every schedule.
+type BatchReadSchedulesRequest struct {
+	BaseRequest `json:",inline"`
+	Schedules   []string `json:"schedules,omitempty"`
+	Device      string   `json:"device,omitempty"`
+	Pattern     string   `json:"pattern,omitempty"`
+}
+
+// BatchDeleteSchedulesRequest is the request body for schedule:delete_batch. Set exactly
+// one of Schedules or Device: delete offers no pattern and no way to delete every schedule.
+type BatchDeleteSchedulesRequest struct {
+	BaseRequest `json:",inline"`
+	Schedules   []string `json:"schedules,omitempty"`
+	Device      string   `json:"device,omitempty"`
+}
+
+type BatchAddSchedulesRequest struct {
+	BaseRequest `json:",inline"`
+	Schedules   []Schedule `json:"schedules"`
+}
+
+// NewBatchReadSchedulesRequest builds a schedule:read_batch request. The specification makes
+// the argument a one-of; this constructor does not validate the selector, so callers must
+// leave all three empty to select everything and set at most one of them otherwise.
+func NewBatchReadSchedulesRequest(scheduleNames []string, deviceName, pattern, clientName string) BatchReadSchedulesRequest {
+	if scheduleNames == nil && deviceName == "" {
+		scheduleNames = []string{}
+	}
+	return BatchReadSchedulesRequest{
+		BaseRequest: NewBaseRequest(BatchReadSchedulesOperation, clientName),
+		Schedules:   scheduleNames,
+		Device:      deviceName,
+		Pattern:     pattern,
+	}
+}
+
+// NewBatchAddSchedulesRequest builds a schedule:add_batch request. An empty payload is
+// encoded as [] rather than null so both add operations put the same shape on the wire.
+func NewBatchAddSchedulesRequest(schedules []Schedule, clientName string) BatchAddSchedulesRequest {
+	items := make([]Schedule, 0, len(schedules))
+	items = append(items, schedules...)
+	return BatchAddSchedulesRequest{
+		BaseRequest: NewBaseRequest(BatchAddSchedulesOperation, clientName),
+		Schedules:   items,
+	}
+}
+
+// NewBatchDeleteSchedulesRequest builds a schedule:delete_batch request.
+func NewBatchDeleteSchedulesRequest(scheduleNames []string, deviceName, clientName string) BatchDeleteSchedulesRequest {
+	if scheduleNames == nil && deviceName == "" {
+		scheduleNames = []string{}
+	}
+	return BatchDeleteSchedulesRequest{
+		BaseRequest: NewBaseRequest(BatchDeleteSchedulesOperation, clientName),
+		Schedules:   scheduleNames,
+		Device:      deviceName,
+	}
 }
