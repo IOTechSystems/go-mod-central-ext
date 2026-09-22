@@ -216,12 +216,13 @@ type BatchScheduleResultsResponse struct {
 	Result       BatchScheduleResults `json:"result"`
 }
 
-// BatchScheduleResults holds the per-item outcomes, as BatchDeviceResults does.
 type BatchScheduleResults struct {
 	BaseResult `json:",inline"`
-	Results    []BatchScheduleResult `json:"schedule_results"`
+	Results    []BatchScheduleResult `json:"schedules"`
 }
 
+// BatchScheduleResult names the schedule an outcome belongs to, except on add_batch,
+// where XRT omits the name and results map by position.
 type BatchScheduleResult struct {
 	BaseResult `json:",inline"`
 	Schedule   string `json:"schedule"`

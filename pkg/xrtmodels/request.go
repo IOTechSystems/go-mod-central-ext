@@ -503,7 +503,13 @@ type BatchDeleteSchedulesRequest struct {
 
 type BatchAddSchedulesRequest struct {
 	BaseRequest `json:",inline"`
-	Schedules   []Schedule `json:"schedules"`
+	Schedules   []BatchAddScheduleItem `json:"schedules"`
+}
+
+// BatchAddScheduleItem nests a schedule under its own key, as schedule:add does. XRT
+// rejects a flat object with "missing schedule" and creates nothing.
+type BatchAddScheduleItem struct {
+	Schedule Schedule `json:"schedule"`
 }
 
 // NewBatchReadSchedulesRequest builds a schedule:read_batch request. The specification makes
@@ -524,8 +530,10 @@ func NewBatchReadSchedulesRequest(scheduleNames []string, deviceName, pattern, c
 // NewBatchAddSchedulesRequest builds a schedule:add_batch request. An empty payload is
 // encoded as [] rather than null so both add operations put the same shape on the wire.
 func NewBatchAddSchedulesRequest(schedules []Schedule, clientName string) BatchAddSchedulesRequest {
-	items := make([]Schedule, 0, len(schedules))
-	items = append(items, schedules...)
+	items := make([]BatchAddScheduleItem, 0, len(schedules))
+	for _, schedule := range schedules {
+		items = append(items, BatchAddScheduleItem{Schedule: schedule})
+	}
 	return BatchAddSchedulesRequest{
 		BaseRequest: NewBaseRequest(BatchAddSchedulesOperation, clientName),
 		Schedules:   items,
