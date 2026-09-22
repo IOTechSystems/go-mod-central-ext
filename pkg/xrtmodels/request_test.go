@@ -294,3 +294,70 @@ func TestBatchAddRequestsEncodeEmptyPayloadConsistently(t *testing.T) {
 		})
 	}
 }
+
+// XRT requires each schedule nested under its own key. A flat object is rejected with
+// "missing schedule" (status 6) and nothing is created, so the encoded shape is pinned
+// here rather than only the item count (see BatchAddScheduleItem).
+func TestNewBatchAddSchedulesRequestNestsEachSchedule(t *testing.T) {
+	request := NewBatchAddSchedulesRequest([]Schedule{
+		{Name: "s1", Device: "d", Resource: []string{"R"}, Interval: 1000},
+	}, "test-client")
+
+	encoded, err := json.Marshal(request)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var decoded struct {
+		Schedules []map[string]json.RawMessage `json:"schedules"`
+	}
+	if err := json.Unmarshal(encoded, &decoded); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(decoded.Schedules) != 1 {
+		t.Fatalf("got %d items, want 1", len(decoded.Schedules))
+	}
+
+	nested, ok := decoded.Schedules[0]["schedule"]
+	if !ok {
+		t.Fatalf("each item must nest the schedule under \"schedule\", got keys %v", keysOf(decoded.Schedules[0]))
+	}
+	// The nested object must be the schedule itself, not another wrapper.
+	var schedule Schedule
+	if err := json.Unmarshal(nested, &schedule); err != nil {
+		t.Fatalf("nested value is not a Schedule: %v", err)
+	}
+	if schedule.Name != "s1" || schedule.Device != "d" {
+		t.Errorf("nested schedule: got name=%q device=%q, want s1/d", schedule.Name, schedule.Device)
+	}
+}
+
+func keysOf(m map[string]json.RawMessage) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// The per-item outcomes of schedule:add_batch and schedule:delete_batch arrive under
+// "schedules", unlike the device operations' "device_results" — measured on XRT 3.4.6.
+func TestBatchScheduleResultsDecodesTheMeasuredReply(t *testing.T) {
+	// Verbatim from XRT 3.4.6, schedule:delete_batch with one hit and one miss.
+	const reply = `{"result":{"schedules":[{"schedule":"s1","status":0},` +
+		`{"error":"schedule not found","schedule":"nope","status":1}],"status":0}}`
+
+	var response BatchScheduleResultsResponse
+	if err := json.Unmarshal([]byte(reply), &response); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(response.Result.Results) != 2 {
+		t.Fatalf("got %d results, want 2", len(response.Result.Results))
+	}
+	if response.Result.Results[0].Schedule != "s1" || response.Result.Results[0].Status != 0 {
+		t.Errorf("[0]: got %+v, want s1/0", response.Result.Results[0])
+	}
+	if response.Result.Results[1].Schedule != "nope" || response.Result.Results[1].Status != 1 {
+		t.Errorf("[1]: got %+v, want nope/1", response.Result.Results[1])
+	}
+}
