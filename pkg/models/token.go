@@ -1,4 +1,4 @@
-// Copyright (C) 2024 IOTech Ltd
+// Copyright (C) 2024-2026 IOTech Ltd
 
 package models
 
@@ -8,6 +8,7 @@ type TokenDetails struct {
 	ClientIP  string
 	UserAgent string
 	UserName  string
+	UserId    string
 	Revoked   bool
 	ExpTime   int64
 }
