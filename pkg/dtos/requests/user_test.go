@@ -227,7 +227,7 @@ func TestLoginRequest_Validate(t *testing.T) {
 
 func TestLoginRequest_UnmarshalJSON(t *testing.T) {
 	valid := testLoginRequest
-	resultTestBytes, _ := json.Marshal(valid)
+	resultTestBytes, _ := json.Marshal(valid) // #nosec G117 -- test fixture, not a real credential
 	type args struct {
 		data []byte
 	}

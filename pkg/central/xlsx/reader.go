@@ -19,7 +19,7 @@ import (
 func readStruct(structPtr any, headerCol []string, row []string, mapppingTable map[string]mappingField) (any, errors.EdgeX) {
 	var extraReturnedCols any
 	v := reflect.ValueOf(structPtr)
-	if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
+	if v.Kind() != reflect.Pointer || v.Elem().Kind() != reflect.Struct {
 		return nil, errors.NewCommonEdgeX(errors.KindServerError, "the structPtr argument should be a pointer of struct", nil)
 	}
 
@@ -72,7 +72,7 @@ func setStdStructFieldValue(originValue string, field reflect.Value) errors.Edge
 	var err errors.EdgeX
 
 	switch {
-	case field.Kind() == reflect.Ptr:
+	case field.Kind() == reflect.Pointer:
 		// Handle the struct pointer field
 		if originValue == "" {
 			return nil
