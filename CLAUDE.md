@@ -12,7 +12,7 @@ make unittest     # go test ./... with coverage
 make lint         # golangci-lint (skipped on non-x86_64)
 make tidy         # go mod tidy
 make vendor       # go mod vendor
-make install-lint # install golangci-lint v2.5.0
+make install-lint # install golangci-lint (version: GOLANGCI_LINT_VERSION in Makefile)
 ```
 
 Build env: `CGO_ENABLED=0 GO111MODULE=on`
