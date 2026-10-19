@@ -77,6 +77,24 @@ const (
 	AlarmActionByIdRoute    = edgexCommon.ApiBase + "/actions/id"
 )
 
+// central-ui routes for internal Edge Central service calls
+const (
+	internalSvcPath = edgexCommon.ApiBase + "/internal"
+
+	ApiInternalDiscoveryDeviceServicePath = internalSvcPath + "/discovery/deviceservice"
+	ApiInternalProfileByNamePath          = internalSvcPath + "/deviceprofile/name"
+
+	ApiInternalAppSvcFileRoute                     = internalSvcPath + "/appSvcConf/file"
+	ApiInternalCommonConfigByFileRoute             = internalSvcPath + "/configuration/common/file"
+	ApiInternalDataCenterDashboardArchiveRoute     = internalSvcPath + "/datacenter/dashboard/archive"
+	ApiInternalDataCenterDashboardByFileRoute      = internalSvcPath + "/datacenter/dashboard/file"
+	ApiInternalResourceTagJobRoute                 = internalSvcPath + "/resourcetag/job"
+	ApiInternalDiscoveryDeviceServiceRoute         = ApiInternalDiscoveryDeviceServicePath + "/:" + edgexCommon.Name
+	ApiInternalProfileResourceTagRoute             = internalSvcPath + "/deviceprofile/resourcetag"
+	ApiInternalProfileByNameResourceTagRoute       = ApiInternalProfileByNamePath + "/:" + edgexCommon.Name + "/resourcetag"
+	ApiInternalProfileByNameResourceTagResultRoute = ApiInternalProfileByNameResourceTagRoute + "/result"
+)
+
 // constants relate to header names
 const (
 	AuthorizationHeader   = "Authorization"
