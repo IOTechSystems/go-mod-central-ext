@@ -193,3 +193,29 @@ const (
 	AlarmSourceTypeMessageBus  = "messageBus"
 	AlarmSourceTypeSparkplug   = "sparkplug"
 )
+
+// constants relate to the central-ui resource tag job status
+const (
+	ResourceTagStatusRunning   = "RUNNING"
+	ResourceTagStatusCompleted = "COMPLETED"
+	ResourceTagStatusFailed    = "FAILED"
+)
+
+// constants relate to the central-ui resource tag job result keys
+const (
+	ResourceTagHeaderResourceName        = "ResourceName"
+	ResourceTagHeaderResourceDescription = "ResourceDescription"
+	ResourceTagHeaderResourceUnits       = "ResourceUnits"
+	ResourceTagHeaderResourceValueType   = "ResourceValueType"
+	ResourceTagHeaderTag                 = "Tag"
+	ResourceTagHeaderPredicted           = "Predicted"
+	ResourceTagHeaderChanged             = "Changed"
+	ResourceTagHeaderConfidence          = "Confidence"
+	ResourceTagHeaderNormalizedPoint     = "NormalizedPoint"
+	ResourceTagHeaderSkipped             = "Skipped"
+	ResourceTagHeaderEquipment           = "Equipment"
+	ResourceTagHeaderAssetType           = "AssetType"
+	ResourceTagHeaderAssetTypeOptions    = "AssetTypeOptions"
+	ResourceTagHeaderOptionalFields      = "OptionalFields"
+	ResourceTagHeaderBACnetObjectType    = "BACnetObjectType"
+)
