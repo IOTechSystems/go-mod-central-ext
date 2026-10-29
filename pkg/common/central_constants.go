@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2025 IOTech Ltd
+// Copyright (C) 2022-2026 IOTech Ltd
 
 package common
 
@@ -218,4 +218,30 @@ const (
 	ResourceTagHeaderAssetTypeOptions    = "AssetTypeOptions"
 	ResourceTagHeaderOptionalFields      = "OptionalFields"
 	ResourceTagHeaderBACnetObjectType    = "BACnetObjectType"
+)
+
+// Chart kinds an AI dashboard panel may have
+const (
+	AIChartLine  = "line"
+	AIChartBar   = "bar"
+	AIChartStat  = "stat"
+	AIChartTable = "table"
+	AIChartGauge = "gauge"
+	AIChartState = "state"
+)
+
+var AIChartKinds = []string{AIChartLine, AIChartBar, AIChartStat, AIChartTable, AIChartGauge, AIChartState}
+
+// Tag ontologies an AI dashboard can use; each dashboard uses one
+const (
+	AIOntologyHaystack = "haystack"
+	AIOntologyEO66     = "eo66"
+)
+
+var AIOntologies = []string{AIOntologyHaystack, AIOntologyEO66}
+
+// AI dashboard grid and default range
+const (
+	AIGridColumns      = 12
+	DefaultAIRangeLast = "24h"
 )

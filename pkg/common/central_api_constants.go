@@ -3,6 +3,8 @@
 package common
 
 import (
+	"strings"
+
 	edgexCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/common"
 )
 
@@ -94,6 +96,29 @@ const (
 	ApiInternalProfileByNameResourceTagRoute       = ApiInternalProfileByNamePath + "/:" + edgexCommon.Name + "/resourcetag"
 	ApiInternalProfileByNameResourceTagResultRoute = ApiInternalProfileByNameResourceTagRoute + "/result"
 )
+
+// central-ui AI dashboard routes; InternalRoute gives the internal route of each
+const (
+	AIPanelId = "panelId"
+
+	ApiAIDashboardPath           = edgexCommon.ApiBase + "/ai-dashboard"
+	ApiAIDashboardRoute          = ApiAIDashboardPath
+	ApiAIDashboardAllRoute       = ApiAIDashboardPath + "/all"
+	ApiAIDashboardByIdPath       = ApiAIDashboardPath + "/id"
+	ApiAIDashboardByIdRoute      = ApiAIDashboardByIdPath + "/:" + edgexCommon.Id
+	ApiAIDashboardPanelRoute     = ApiAIDashboardByIdRoute + "/panel"
+	ApiAIDashboardPanelByIdRoute = ApiAIDashboardPanelRoute + "/id/:" + AIPanelId
+	ApiAIDashboardPointsRoute    = ApiAIDashboardPath + "/points"
+)
+
+// InternalRoute puts /internal after /api/v3 in a user route; any other string, an internal route included, is returned unchanged
+func InternalRoute(route string) string {
+	rest, ok := strings.CutPrefix(route, edgexCommon.ApiBase+"/")
+	if !ok || route == internalSvcPath || strings.HasPrefix(route, internalSvcPath+"/") {
+		return route
+	}
+	return internalSvcPath + "/" + rest
+}
 
 // constants relate to header names
 const (
