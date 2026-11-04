@@ -3,6 +3,8 @@
 package common
 
 import (
+	"strings"
+
 	edgexCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/common"
 )
 
@@ -21,6 +23,8 @@ const (
 	Offset        = "offset"
 	Limit         = "limit"
 	Name          = "name"
+	PanelId       = "panelId"
+	Tag           = "tag"
 )
 
 const (
@@ -77,6 +81,17 @@ const (
 	AlarmActionByIdRoute    = edgexCommon.ApiBase + "/actions/id"
 )
 
+// central-ui metrics dashboard routes
+const (
+	ApiMetricsDashboardPath           = edgexCommon.ApiBase + "/metricsdashboard"
+	ApiMetricsDashboardAllRoute       = ApiMetricsDashboardPath + "/" + edgexCommon.All
+	ApiMetricsDashboardByIdRoute      = ApiMetricsDashboardPath + "/" + edgexCommon.Id + "/:" + edgexCommon.Id
+	ApiMetricsDashboardPanelRoute     = ApiMetricsDashboardByIdRoute + "/panel"
+	ApiMetricsDashboardPanelByIdRoute = ApiMetricsDashboardPanelRoute + "/" + edgexCommon.Id + "/:" + PanelId
+	ApiMetricsDashboardTagsRoute      = ApiMetricsDashboardPath + "/tags"
+	ApiMetricsDashboardPointsRoute    = ApiMetricsDashboardPath + "/points"
+)
+
 // central-ui routes for internal Edge Central service calls
 const (
 	internalSvcPath = edgexCommon.ApiBase + "/internal"
@@ -101,3 +116,14 @@ const (
 	ForwardedUriHeader    = "X-Forwarded-Uri"
 	ForwardedMethodHeader = "X-Forwarded-Method"
 )
+
+// InternalRoute returns the internal route of a user route under /api/v3, such as /api/v3/internal/metricsdashboard/all
+// for /api/v3/metricsdashboard/all; an internal route and any other string come back unchanged
+func InternalRoute(route string) string {
+	prefix := edgexCommon.ApiBase + "/"
+	rest, ok := strings.CutPrefix(route, prefix)
+	if !ok || rest == "" || rest == "internal" || strings.HasPrefix(rest, "internal/") {
+		return route
+	}
+	return internalSvcPath + "/" + rest
+}
