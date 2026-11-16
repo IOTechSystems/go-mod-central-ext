@@ -20,6 +20,7 @@ func TestInternalRoute(t *testing.T) {
 		{ApiMetricsDashboardPanelByIdRoute, "/api/v3/internal/metricsdashboard/id/:id/panel/id/:panelId"},
 		{ApiMetricsDashboardTagsRoute, "/api/v3/internal/metricsdashboard/tags"},
 		{ApiMetricsDashboardPointsRoute, "/api/v3/internal/metricsdashboard/points"},
+		{ApiMetricsDashboardArchiveRoute, "/api/v3/internal/metricsdashboard/archive"},
 		{"/api/v3/internal/metricsdashboard/all", "/api/v3/internal/metricsdashboard/all"},
 		{"/api/v3/internal", "/api/v3/internal"},
 		{"/api/v3/", "/api/v3/"},

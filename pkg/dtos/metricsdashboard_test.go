@@ -125,6 +125,31 @@ func TestMetricsDashboard_DecodesUnknownField(t *testing.T) {
 	assert.NoError(t, d.Validate())
 }
 
+func TestMetricsDashboard_Pinned(t *testing.T) {
+	for _, pinned := range []bool{true, false} {
+		b, err := json.Marshal(MetricsDashboard{Name: "temps", Pinned: pinned})
+		require.NoError(t, err)
+		assert.Contains(t, string(b), fmt.Sprintf(`"pinned":%t`, pinned))
+		var d MetricsDashboard
+		require.NoError(t, json.Unmarshal(b, &d))
+		assert.Equal(t, pinned, d.Pinned)
+
+		b, err = json.Marshal(MetricsDashboardInfo{Name: "temps", Pinned: pinned})
+		require.NoError(t, err)
+		assert.Contains(t, string(b), fmt.Sprintf(`"pinned":%t`, pinned))
+		var info MetricsDashboardInfo
+		require.NoError(t, json.Unmarshal(b, &info))
+		assert.Equal(t, pinned, info.Pinned)
+	}
+
+	var d MetricsDashboard
+	require.NoError(t, json.Unmarshal([]byte(`{"name":"temps"}`), &d))
+	assert.False(t, d.Pinned)
+	var info MetricsDashboardInfo
+	require.NoError(t, json.Unmarshal([]byte(`{"name":"temps"}`), &info))
+	assert.False(t, info.Pinned)
+}
+
 func TestMetricsDashboardValidate_EmptyPanelsIsArray(t *testing.T) {
 	d := MetricsDashboard{Name: "temps", Range: MetricsDashboardRange{Last: "5m"}}
 	require.NoError(t, d.Validate())

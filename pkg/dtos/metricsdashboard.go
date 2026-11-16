@@ -20,6 +20,7 @@ type MetricsDashboard struct {
 	Description string                  `json:"description,omitempty"`
 	Range       MetricsDashboardRange   `json:"range"`
 	Panels      []MetricsDashboardPanel `json:"panels"`
+	Pinned      bool                    `json:"pinned"`
 	Revision    int64                   `json:"revision,omitempty"`
 	Created     int64                   `json:"created,omitempty"`
 	Modified    int64                   `json:"modified,omitempty"`
@@ -56,6 +57,7 @@ type MetricsDashboardInfo struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
 	PanelCount  int    `json:"panelCount"`
+	Pinned      bool   `json:"pinned"`
 	Revision    int64  `json:"revision"`
 	Modified    int64  `json:"modified"`
 }
