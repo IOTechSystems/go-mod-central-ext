@@ -4,6 +4,7 @@ package requests
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/dtos"
@@ -43,13 +44,26 @@ func TestUpdateMetricsDashboardRequest_NeedsAChange(t *testing.T) {
 	err := json.Unmarshal([]byte(`{"apiVersion":"v3"}`), &req)
 	require.Error(t, err)
 	assert.Equal(t, errors.KindContractInvalid, errors.Kind(err))
+	assert.Contains(t, err.Error(), "pinned")
 
 	for _, body := range []string{
 		`{"apiVersion":"v3","name":"n"}`,
 		`{"apiVersion":"v3","description":""}`,
 		`{"apiVersion":"v3","range":{"last":"1h"}}`,
+		`{"apiVersion":"v3","pinned":true}`,
+		`{"apiVersion":"v3","pinned":false}`,
 	} {
 		assert.NoError(t, json.Unmarshal([]byte(body), &UpdateMetricsDashboardRequest{}), body)
+	}
+}
+
+func TestUpdateMetricsDashboardRequest_PinnedAlone(t *testing.T) {
+	for _, pinned := range []bool{true, false} {
+		var req UpdateMetricsDashboardRequest
+		require.NoError(t, json.Unmarshal([]byte(fmt.Sprintf(`{"apiVersion":"v3","pinned":%t}`, pinned)), &req))
+		require.NotNil(t, req.Pinned)
+		assert.Equal(t, pinned, *req.Pinned)
+		assert.Nil(t, req.Name)
 	}
 }
 

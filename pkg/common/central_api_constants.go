@@ -90,6 +90,7 @@ const (
 	ApiMetricsDashboardPanelByIdRoute = ApiMetricsDashboardPanelRoute + "/" + edgexCommon.Id + "/:" + PanelId
 	ApiMetricsDashboardTagsRoute      = ApiMetricsDashboardPath + "/tags"
 	ApiMetricsDashboardPointsRoute    = ApiMetricsDashboardPath + "/points"
+	ApiMetricsDashboardArchiveRoute   = ApiMetricsDashboardPath + "/archive"
 )
 
 // central-ui routes for internal Edge Central service calls

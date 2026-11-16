@@ -55,6 +55,7 @@ type UpdateMetricsDashboardRequest struct {
 	Name                  *string                     `json:"name,omitempty"`
 	Description           *string                     `json:"description,omitempty"`
 	Range                 *dtos.MetricsDashboardRange `json:"range,omitempty"`
+	Pinned                *bool                       `json:"pinned,omitempty"`
 }
 
 // Validate satisfies the Validator interface
@@ -62,8 +63,8 @@ func (u *UpdateMetricsDashboardRequest) Validate() error {
 	if err := edgexCommon.Validate(u); err != nil {
 		return err
 	}
-	if u.Name == nil && u.Description == nil && u.Range == nil {
-		return errors.NewCommonEdgeX(errors.KindContractInvalid, "the update sets none of name, description and range", nil)
+	if u.Name == nil && u.Description == nil && u.Range == nil && u.Pinned == nil {
+		return errors.NewCommonEdgeX(errors.KindContractInvalid, "the update sets none of name, description, range and pinned", nil)
 	}
 	if u.Name != nil && strings.TrimSpace(*u.Name) == "" {
 		return errors.NewCommonEdgeX(errors.KindContractInvalid, "dashboard name is required", nil)
@@ -81,6 +82,7 @@ func (u *UpdateMetricsDashboardRequest) UnmarshalJSON(b []byte) error {
 		Name        *string
 		Description *string
 		Range       *dtos.MetricsDashboardRange
+		Pinned      *bool
 	}
 	if err := json.Unmarshal(b, &alias); err != nil {
 		return errors.NewCommonEdgeX(errors.KindContractInvalid, "Failed to unmarshal request body as JSON.", err)
