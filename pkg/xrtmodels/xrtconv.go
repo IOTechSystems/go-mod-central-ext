@@ -5,6 +5,7 @@ package xrtmodels
 import (
 	"encoding/base64"
 	"fmt"
+	"math"
 	"strconv"
 
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/central/dbc"
@@ -140,285 +141,172 @@ func ToEdgeXV2EventDTO(xrtEvent MultiResourcesResult) (edgexDtos.Event, errors.E
 	return event, nil
 }
 
-// ParseXRTReadingValue parses the XRT reading value to EdgeX reading value
+// toInt64 accepts an int64, as Reading.UnmarshalJSON decodes an Int64 value, or a float64, as a JSON number decodes
+// into any, within int64's range; the conversion would silently wrap one beyond it.
+func toInt64(v any) (int64, bool) {
+	switch n := v.(type) {
+	case float64:
+		return int64(n), n >= -(1<<63) && n < 1<<63
+	case int64:
+		return n, true
+	}
+	return 0, false
+}
+
+// toUint64 accepts a uint64 or a float64 within uint64's range (see toInt64).
+func toUint64(v any) (uint64, bool) {
+	switch n := v.(type) {
+	case float64:
+		return uint64(n), n > -1 && n < 1<<64
+	case uint64:
+		return n, true
+	}
+	return 0, false
+}
+
+// toInteger accepts a float64 within T's range (see toInt64), checked by converting back, which is exact for T up to
+// 32 bits but not beyond: 2^64 could convert to MaxUint64 and back to 2^64.
+func toInteger[T int8 | int16 | int32 | uint8 | uint16 | uint32](v any) (T, bool) {
+	f, ok := v.(float64)
+	if !ok {
+		return 0, false
+	}
+	t := T(f)
+	return t, float64(t) == math.Trunc(f)
+}
+
+// ParseXRTReadingValue parses the XRT reading value to EdgeX reading value.
 func ParseXRTReadingValue(valueType string, reading interface{}) (interface{}, errors.EdgeX) {
-	// Since we receive the reading in JSON format, the JSON lib will unmarshal the reading to specified data type:
-	// bool for JSON booleans,  float64 for JSON numbers, nil for JSON null
-	// string for JSON strings, []interface{} for JSON arrays, map[string]interface{} for JSON objects
-	var err error
-	var val interface{}
-	numberErrMsg := fmt.Sprintf("invalid number '%v'", reading)
-	arraryErrMsg := fmt.Sprintf("invalid array '%v'", reading)
+	// The reading is as JSON decodes into any: bool, float64, nil, string, []interface{} or map[string]interface{};
+	// an Int64 or Uint64 value, or an element of their arrays, may also be int64 or uint64 (see Reading.UnmarshalJSON).
 	switch valueType {
 	case edgexCommon.ValueTypeString:
-		strValue, ok := reading.(string)
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid string value '%v'", reading), nil)
-		}
-		val = strValue
+		return parseValue(reading, assertType[string], invalidString)
 	case edgexCommon.ValueTypeBool:
-		boolValue, ok := reading.(bool)
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid bool value '%v'", reading), nil)
-		}
-		val = boolValue
+		return parseValue(reading, assertType[bool], invalidBool)
 	case edgexCommon.ValueTypeUint8:
-		float64Value, ok := reading.(float64)
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid numbers '%v'", reading), nil)
-		}
-		val = uint8(float64Value)
+		return parseValue(reading, toInteger[uint8], invalidNumber)
 	case edgexCommon.ValueTypeUint16:
-		float64Value, ok := reading.(float64)
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid numbers '%v'", reading), nil)
-		}
-		val = uint16(float64Value)
+		return parseValue(reading, toInteger[uint16], invalidNumber)
 	case edgexCommon.ValueTypeUint32:
-		float64Value, ok := reading.(float64)
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, numberErrMsg, nil)
-		}
-		val = uint32(float64Value)
+		return parseValue(reading, toInteger[uint32], invalidNumber)
 	case edgexCommon.ValueTypeUint64:
-		float64Value, ok := reading.(float64)
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, numberErrMsg, nil)
-		}
-		val = uint64(float64Value)
+		return parseValue(reading, toUint64, invalidNumber)
 	case edgexCommon.ValueTypeInt8:
-		float64Value, ok := reading.(float64)
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, numberErrMsg, nil)
-		}
-		val = int8(float64Value)
+		return parseValue(reading, toInteger[int8], invalidNumber)
 	case edgexCommon.ValueTypeInt16:
-		float64Value, ok := reading.(float64)
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, numberErrMsg, nil)
-		}
-		val = int16(float64Value)
+		return parseValue(reading, toInteger[int16], invalidNumber)
 	case edgexCommon.ValueTypeInt32:
-		float64Value, ok := reading.(float64)
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, numberErrMsg, nil)
-		}
-		val = int32(float64Value)
+		return parseValue(reading, toInteger[int32], invalidNumber)
 	case edgexCommon.ValueTypeInt64:
-		float64Value, ok := reading.(float64)
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, numberErrMsg, nil)
-		}
-		val = int64(float64Value)
+		return parseValue(reading, toInt64, invalidNumber)
 	case edgexCommon.ValueTypeFloat32:
-		float64Value, ok := reading.(float64)
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, numberErrMsg, nil)
-		}
-		val = float32(float64Value)
+		return parseValue(reading, toFloat32, invalidNumber)
 	case edgexCommon.ValueTypeFloat64:
-		float64Value, ok := reading.(float64)
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, numberErrMsg, nil)
-		}
-		val = float64Value
+		return parseValue(reading, assertType[float64], invalidNumber)
 	case edgexCommon.ValueTypeBinary:
-		// XRT transfer binary data in base64 encoded string
-		strValue, ok := reading.(string)
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid string value '%v'", reading), nil)
-		}
-		val, err = base64.StdEncoding.DecodeString(strValue)
-		if err != nil {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("fail to decode the base64 string '%v'", reading), err)
-		}
+		return parseBinary(reading)
 	case edgexCommon.ValueTypeBoolArray:
-		interfaceArray, ok := reading.([]interface{})
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, arraryErrMsg, nil)
-		}
-		boolArray := make([]bool, len(interfaceArray))
-		for i, v := range interfaceArray {
-			boolValue, ok := v.(bool)
-			if !ok {
-				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid bool value '%v'", v), nil)
-			}
-			boolArray[i] = boolValue
-		}
-		val = boolArray
+		return parseArray(reading, assertType[bool], invalidBool)
 	case edgexCommon.ValueTypeStringArray:
-		interfaceArray, ok := reading.([]interface{})
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, arraryErrMsg, nil)
-		}
-		stringArray := make([]string, len(interfaceArray))
-		for i, v := range interfaceArray {
-			strValue, ok := v.(string)
-			if !ok {
-				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid string value '%v'", v), nil)
-			}
-			stringArray[i] = strValue
-		}
-		val = stringArray
+		return parseArray(reading, assertType[string], invalidString)
 	case edgexCommon.ValueTypeUint8Array:
-		interfaceArray, ok := reading.([]interface{})
-		if !ok {
-			// try to decode from the base64 string
-			data, decodeErr := base64.StdEncoding.DecodeString(fmt.Sprint(reading))
-			if decodeErr != nil {
-				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, arraryErrMsg, nil)
-			}
-			val = data
-			break
+		if _, ok := reading.([]interface{}); !ok {
+			return parseBase64Uint8Array(reading)
 		}
-		uint8Array := make([]uint8, len(interfaceArray))
-		for i, v := range interfaceArray {
-			float64Value, ok := v.(float64)
-			if !ok {
-				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid nunmber '%v'", v), nil)
-			}
-			uint8Array[i] = uint8(float64Value)
-		}
-		val = uint8Array
+		return parseArray(reading, toInteger[uint8], invalidNumber)
 	case edgexCommon.ValueTypeUint16Array:
-		interfaceArray, ok := reading.([]interface{})
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, arraryErrMsg, nil)
-		}
-		uint16Array := make([]uint16, len(interfaceArray))
-		for i, v := range interfaceArray {
-			float64Value, ok := v.(float64)
-			if !ok {
-				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid nunmber '%v'", v), nil)
-			}
-			uint16Array[i] = uint16(float64Value)
-		}
-		val = uint16Array
+		return parseArray(reading, toInteger[uint16], invalidNumber)
 	case edgexCommon.ValueTypeUint32Array:
-		interfaceArray, ok := reading.([]interface{})
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, arraryErrMsg, nil)
-		}
-		uint32Array := make([]uint32, len(interfaceArray))
-		for i, v := range interfaceArray {
-			float64Value, ok := v.(float64)
-			if !ok {
-				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid nunmber '%v'", v), nil)
-			}
-			uint32Array[i] = uint32(float64Value)
-		}
-		val = uint32Array
+		return parseArray(reading, toInteger[uint32], invalidNumber)
 	case edgexCommon.ValueTypeUint64Array:
-		interfaceArray, ok := reading.([]interface{})
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, arraryErrMsg, nil)
-		}
-		uint64Array := make([]uint64, len(interfaceArray))
-		for i, v := range interfaceArray {
-			float64Value, ok := v.(float64)
-			if !ok {
-				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid nunmber '%v'", v), nil)
-			}
-			uint64Array[i] = uint64(float64Value)
-		}
-		val = uint64Array
+		return parseArray(reading, toUint64, invalidNumber)
 	case edgexCommon.ValueTypeInt8Array:
-		interfaceArray, ok := reading.([]interface{})
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, arraryErrMsg, nil)
-		}
-		int8Array := make([]int8, len(interfaceArray))
-		for i, v := range interfaceArray {
-			float64Value, ok := v.(float64)
-			if !ok {
-				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid nunmber '%v'", v), nil)
-			}
-			int8Array[i] = int8(float64Value)
-		}
-		val = int8Array
+		return parseArray(reading, toInteger[int8], invalidNumber)
 	case edgexCommon.ValueTypeInt16Array:
-		interfaceArray, ok := reading.([]interface{})
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, arraryErrMsg, nil)
-		}
-		int16Array := make([]int16, len(interfaceArray))
-		for i, v := range interfaceArray {
-			float64Value, ok := v.(float64)
-			if !ok {
-				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid number '%v'", v), nil)
-			}
-			int16Array[i] = int16(float64Value)
-		}
-		val = int16Array
+		return parseArray(reading, toInteger[int16], invalidNumber)
 	case edgexCommon.ValueTypeInt32Array:
-		interfaceArray, ok := reading.([]interface{})
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, arraryErrMsg, nil)
-		}
-		int32Array := make([]int32, len(interfaceArray))
-		for i, v := range interfaceArray {
-			float64Value, ok := v.(float64)
-			if !ok {
-				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid number '%v'", v), nil)
-			}
-			int32Array[i] = int32(float64Value)
-		}
-		val = int32Array
+		return parseArray(reading, toInteger[int32], invalidNumber)
 	case edgexCommon.ValueTypeInt64Array:
-		interfaceArray, ok := reading.([]interface{})
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, arraryErrMsg, nil)
-		}
-		int64Array := make([]int64, len(interfaceArray))
-		for i, v := range interfaceArray {
-			float64Value, ok := v.(float64)
-			if !ok {
-				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid number '%v'", v), nil)
-			}
-			int64Array[i] = int64(float64Value)
-		}
-		val = int64Array
+		return parseArray(reading, toInt64, invalidNumber)
 	case edgexCommon.ValueTypeFloat32Array:
-		interfaceArray, ok := reading.([]interface{})
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, arraryErrMsg, nil)
-		}
-		float32Array := make([]float32, len(interfaceArray))
-		for i, v := range interfaceArray {
-			float64Value, ok := v.(float64)
-			if !ok {
-				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid number '%v'", v), nil)
-			}
-			float32Array[i] = float32(float64Value)
-		}
-		val = float32Array
+		return parseArray(reading, toFloat32, invalidNumber)
 	case edgexCommon.ValueTypeFloat64Array:
-		interfaceArray, ok := reading.([]interface{})
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, arraryErrMsg, nil)
-		}
-		float64Array := make([]float64, len(interfaceArray))
-		for i, v := range interfaceArray {
-			float64Value, ok := v.(float64)
-			if !ok {
-				return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid number '%v'", v), nil)
-			}
-			float64Array[i] = float64Value
-		}
-		val = float64Array
+		return parseArray(reading, assertType[float64], invalidNumber)
 	case edgexCommon.ValueTypeObject:
-		val = reading
+		return reading, nil
 	case edgexCommon.ValueTypeObjectArray:
-		_, ok := reading.([]interface{})
-		if !ok {
-			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, arraryErrMsg, nil)
+		if _, ok := reading.([]interface{}); !ok {
+			return nil, invalidArray(reading)
 		}
-		val = reading
-	default:
-		return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("none supported value type '%s'", valueType), nil)
+		return reading, nil
 	}
+	return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("none supported value type '%s'", valueType), nil)
+}
 
-	return val, nil
+// Formats of the error for a reading value, or an array element, of the wrong type.
+const (
+	invalidString = "invalid string value '%v'"
+	invalidBool   = "invalid bool value '%v'"
+	invalidNumber = "invalid number '%v'"
+)
+
+func assertType[T any](v any) (T, bool) {
+	t, ok := v.(T)
+	return t, ok
+}
+
+func toFloat32(v any) (float32, bool) {
+	f, ok := v.(float64)
+	return float32(f), ok
+}
+
+func parseValue[T any](reading any, convert func(any) (T, bool), format string) (any, errors.EdgeX) {
+	v, ok := convert(reading)
+	if !ok {
+		return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf(format, reading), nil)
+	}
+	return v, nil
+}
+
+func parseArray[T any](reading any, convert func(any) (T, bool), format string) (any, errors.EdgeX) {
+	elems, ok := reading.([]interface{})
+	if !ok {
+		return nil, invalidArray(reading)
+	}
+	array := make([]T, len(elems))
+	for i, elem := range elems {
+		if array[i], ok = convert(elem); !ok {
+			return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf(format, elem), nil)
+		}
+	}
+	return array, nil
+}
+
+func invalidArray(reading any) errors.EdgeX {
+	return errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("invalid array '%v'", reading), nil)
+}
+
+// XRT transfers binary data in a base64 encoded string.
+func parseBinary(reading any) (any, errors.EdgeX) {
+	strValue, ok := reading.(string)
+	if !ok {
+		return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf(invalidString, reading), nil)
+	}
+	data, err := base64.StdEncoding.DecodeString(strValue)
+	if err != nil {
+		return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("fail to decode the base64 string '%v'", reading), err)
+	}
+	return data, nil
+}
+
+// parseBase64Uint8Array decodes a Uint8Array reading that is not an array, as base64.
+func parseBase64Uint8Array(reading any) (any, errors.EdgeX) {
+	data, err := base64.StdEncoding.DecodeString(fmt.Sprint(reading))
+	if err != nil {
+		return nil, invalidArray(reading)
+	}
+	return data, nil
 }
 
 func FromEdgeXToXRTReadings(readings []edgexDtos.BaseReading) (map[string]Reading, errors.EdgeX) {
