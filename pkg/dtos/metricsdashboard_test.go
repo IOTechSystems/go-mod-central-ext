@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"slices"
 	"testing"
 
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/common"
@@ -17,6 +18,13 @@ import (
 
 func validMetricsDashboardPanel() MetricsDashboardPanel {
 	return MetricsDashboardPanel{Title: "Temps", ChartType: "line", Tags: []string{"hs4:zone-air-temp"}}
+}
+
+func pointsMetricsDashboardPanel() MetricsDashboardPanel {
+	return MetricsDashboardPanel{Title: "Temps", ChartType: "line", Points: []MetricsDashboardPanelPoint{
+		{DeviceName: "boiler", ResourceName: "Temp"},
+		{DeviceName: "chiller", ResourceName: "Temp"},
+	}}
 }
 
 func validMetricsDashboard() MetricsDashboard {
@@ -47,6 +55,20 @@ func TestMetricsDashboardValidate_Refusals(t *testing.T) {
 		{"tag without colon", withPanel(func(p *MetricsDashboardPanel) { p.Tags = []string{"zone-air-temp"} })},
 		{"blank key", withPanel(func(p *MetricsDashboardPanel) { p.Tags = []string{" :zone-air-temp"} })},
 		{"blank value", withPanel(func(p *MetricsDashboardPanel) { p.Tags = []string{"hs4: "} })},
+		{"neither tags nor points", withPanel(func(p *MetricsDashboardPanel) { p.Tags = []string{} })},
+		{"both tags and points", withPanel(func(p *MetricsDashboardPanel) { p.Points = pointsMetricsDashboardPanel().Points })},
+		{"blank deviceName", withPanel(func(p *MetricsDashboardPanel) {
+			*p = pointsMetricsDashboardPanel()
+			p.Points[1].DeviceName = " "
+		})},
+		{"blank resourceName", withPanel(func(p *MetricsDashboardPanel) {
+			*p = pointsMetricsDashboardPanel()
+			p.Points[0].ResourceName = ""
+		})},
+		{"devices beside points", withPanel(func(p *MetricsDashboardPanel) {
+			*p = pointsMetricsDashboardPanel()
+			p.Devices = []string{"boiler"}
+		})},
 		{"duplicate panel id", func(d *MetricsDashboard) {
 			p := validMetricsDashboardPanel()
 			p.Id = "a"
@@ -88,6 +110,10 @@ func TestMetricsDashboardValidate_Accepts(t *testing.T) {
 			for i := range d.Panels {
 				d.Panels[i] = validMetricsDashboardPanel()
 			}
+		}},
+		{"points panel", func(d *MetricsDashboard) { d.Panels[0] = pointsMetricsDashboardPanel() }},
+		{"points and tags panels together", func(d *MetricsDashboard) {
+			d.Panels = append(d.Panels, pointsMetricsDashboardPanel())
 		}},
 		{"panels without ids", func(d *MetricsDashboard) {
 			d.Panels = []MetricsDashboardPanel{validMetricsDashboardPanel(), validMetricsDashboardPanel()}
@@ -165,4 +191,61 @@ func TestMetricsDashboardPanelValidate_NamesThePanel(t *testing.T) {
 	assert.Equal(t, errors.KindContractInvalid, errors.Kind(err))
 	assert.Contains(t, err.Error(), "panel Zone temp")
 	assert.Contains(t, err.Error(), "outside the 12-column grid")
+}
+
+func TestMetricsDashboardPanelValidate_Texts(t *testing.T) {
+	tests := []struct {
+		name string
+		edit func(p *MetricsDashboardPanel)
+		want string
+	}{
+		{"neither", func(p *MetricsDashboardPanel) { p.Points = nil }, "panel Temps needs tags or points"},
+		{"both", func(p *MetricsDashboardPanel) { p.Tags = []string{"hs4:t"} }, "panel Temps has both tags and points"},
+		{"blank deviceName", func(p *MetricsDashboardPanel) { p.Points[1].DeviceName = " " },
+			"point 2 of panel Temps needs a deviceName and a resourceName"},
+		{"blank resourceName", func(p *MetricsDashboardPanel) { p.Points[0].ResourceName = "" },
+			"point 1 of panel Temps needs a deviceName and a resourceName"},
+		{"devices", func(p *MetricsDashboardPanel) { p.Devices = []string{"boiler"} }, "panel Temps has devices beside points"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := pointsMetricsDashboardPanel()
+			tt.edit(&p)
+			err := p.Validate()
+			require.Error(t, err)
+			assert.Equal(t, errors.KindContractInvalid, errors.Kind(err))
+			assert.Equal(t, tt.want, err.Error())
+		})
+	}
+}
+
+func TestMetricsDashboardPanelValidate_KeepsPointsAsSent(t *testing.T) {
+	p := pointsMetricsDashboardPanel()
+	p.Points = append(p.Points, MetricsDashboardPanelPoint{DeviceName: " boiler ", ResourceName: "Temp"}, p.Points[0])
+	p.Tags, p.Devices = []string{}, []string{}
+	want := slices.Clone(p.Points)
+	require.NoError(t, p.Validate())
+	assert.Equal(t, want, p.Points)
+	assert.Nil(t, p.Tags)
+	assert.Nil(t, p.Devices)
+}
+
+func TestMetricsDashboardPanel_JSONHoldsOneWay(t *testing.T) {
+	b, err := json.Marshal(pointsMetricsDashboardPanel())
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"title":"Temps","chartType":"line","layout":{"x":0,"y":0,"w":0,"h":0},
+		"points":[{"deviceName":"boiler","resourceName":"Temp"},{"deviceName":"chiller","resourceName":"Temp"}]}`, string(b))
+	var p MetricsDashboardPanel
+	require.NoError(t, json.Unmarshal(b, &p))
+	assert.Equal(t, pointsMetricsDashboardPanel(), p)
+	assert.NoError(t, p.Validate())
+
+	b, err = json.Marshal(validMetricsDashboardPanel())
+	require.NoError(t, err)
+	assert.NotContains(t, string(b), `"points"`)
+	assert.Contains(t, string(b), `"tags":["hs4:zone-air-temp"]`)
+	p = MetricsDashboardPanel{}
+	require.NoError(t, json.Unmarshal(b, &p))
+	assert.Equal(t, validMetricsDashboardPanel(), p)
+	assert.NoError(t, p.Validate())
 }

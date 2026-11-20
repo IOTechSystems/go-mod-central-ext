@@ -72,12 +72,14 @@ func TestUpdateMetricsDashboardPanelRequest_NeedsAChange(t *testing.T) {
 	err := json.Unmarshal([]byte(`{"apiVersion":"v3"}`), &req)
 	require.Error(t, err)
 	assert.Equal(t, errors.KindContractInvalid, errors.Kind(err))
+	assert.Equal(t, "the update sets none of title, chartType, tags, points, devices and layout", err.Error())
 
 	for _, body := range []string{
 		`{"apiVersion":"v3","title":"t"}`,
 		`{"apiVersion":"v3","chartType":"bar"}`,
 		`{"apiVersion":"v3","tags":["hs4:t"]}`,
 		`{"apiVersion":"v3","devices":[]}`,
+		`{"apiVersion":"v3","points":[{"deviceName":"d","resourceName":"r"}]}`,
 		`{"apiVersion":"v3","layout":{"x":0,"y":0,"w":6,"h":4}}`,
 	} {
 		assert.NoError(t, json.Unmarshal([]byte(body), &UpdateMetricsDashboardPanelRequest{}), body)
@@ -113,6 +115,7 @@ func TestMetricsDashboardRequests_CheckTheFieldsSent(t *testing.T) {
 			`{"apiVersion":"v3","dashboard":{"name":"d","range":{"end":1000}}}`,
 			`{"apiVersion":"v3","dashboard":{"name":"d","panels":[{"title":"t","chartType":"line","tags":[]}]}}`,
 			`{"apiVersion":"v3","dashboard":{"name":"d","panels":[{"id":"p","title":"a","chartType":"line","tags":["hs4:t"]},{"id":"p","title":"b","chartType":"line","tags":["hs4:t"]}]}}`,
+			`{"apiVersion":"v3","dashboard":{"name":"d","panels":[{"title":"t","chartType":"line","tags":["hs4:t"],"points":[{"deviceName":"d","resourceName":"r"}]}]}}`,
 		},
 		"update dashboard": {
 			`{"apiVersion":"v3","name":""}`,
@@ -127,6 +130,8 @@ func TestMetricsDashboardRequests_CheckTheFieldsSent(t *testing.T) {
 			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line"}}`,
 			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","tags":["no-colon"]}}`,
 			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","tags":["hs4:t"],"layout":{"x":10,"y":0,"w":6,"h":4}}}`,
+			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","points":[{"deviceName":"d"}]}}`,
+			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","points":[{"deviceName":"d","resourceName":"r"}],"devices":["d"]}}`,
 		},
 		"update panel": {
 			`{"apiVersion":"v3","title":" "}`,
@@ -134,16 +139,27 @@ func TestMetricsDashboardRequests_CheckTheFieldsSent(t *testing.T) {
 			`{"apiVersion":"v3","tags":[]}`,
 			`{"apiVersion":"v3","tags":["hs4:"]}`,
 			`{"apiVersion":"v3","layout":{"x":-1,"y":0,"w":6,"h":4}}`,
+			`{"apiVersion":"v3","points":[]}`,
+			`{"apiVersion":"v3","tags":["hs4:t"],"points":[{"deviceName":"d","resourceName":"r"}]}`,
+			`{"apiVersion":"v3","points":[{"deviceName":" ","resourceName":"r"}]}`,
+			`{"apiVersion":"v3","points":[{"deviceName":"d","resourceName":""}]}`,
+			`{"apiVersion":"v3","points":[{"deviceName":"d","resourceName":"r"}],"devices":["d"]}`,
 		},
 	}
 	accepted := map[string][]string{
 		"add dashboard": {
 			`{"apiVersion":"v3","dashboard":{"name":"d"}}`,
 			`{"apiVersion":"v3","dashboard":{"name":"d","range":{"start":1000,"end":2000},"panels":[{"title":"t","chartType":"line","tags":["hs4:t"]}]}}`,
+			`{"apiVersion":"v3","dashboard":{"name":"d","panels":[{"title":"t","chartType":"line","points":[{"deviceName":"d","resourceName":"r"}]}]}}`,
+		},
+		"add panel": {
+			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","points":[{"deviceName":"d","resourceName":"r"}],"devices":[]}}`,
 		},
 		"update panel": {
 			`{"apiVersion":"v3","layout":{"x":0,"y":0,"w":0,"h":0}}`,
 			`{"apiVersion":"v3","tags":["hs4:t","hs4:t"]}`,
+			`{"apiVersion":"v3","points":[{"deviceName":"d","resourceName":"r"}],"devices":[]}`,
+			`{"apiVersion":"v3","tags":["hs4:t"],"devices":["d"]}`,
 		},
 	}
 	targets := map[string]func() json.Unmarshaler{
@@ -177,4 +193,31 @@ func TestUpdateMetricsDashboardPanelRequest_DedupesTags(t *testing.T) {
 	var req UpdateMetricsDashboardPanelRequest
 	require.NoError(t, json.Unmarshal([]byte(`{"apiVersion":"v3","tags":["hs4:t","hs4:u","hs4:t"]}`), &req))
 	assert.Equal(t, []string{"hs4:t", "hs4:u"}, *req.Tags)
+}
+
+func TestUpdateMetricsDashboardPanelRequest_PointsTexts(t *testing.T) {
+	tests := map[string]string{
+		`{"apiVersion":"v3","points":[]}`: "at least one point is required",
+		`{"apiVersion":"v3","tags":["hs4:t"],"points":[{"deviceName":"d","resourceName":"r"}]}`:          "the update sets both tags and points",
+		`{"apiVersion":"v3","points":[{"deviceName":"d","resourceName":"r"},{"deviceName":"d"}]}`:        "point 2 needs a deviceName and a resourceName",
+		`{"apiVersion":"v3","points":[{"deviceName":"d","resourceName":"r"}],"devices":["d"]}`:           "the update sets devices beside points",
+		`{"apiVersion":"v3","points":[{"deviceName":"d","resourceName":"r"}],"tags":[],"devices":["d"]}`: "the update sets both tags and points",
+	}
+	for body, want := range tests {
+		err := json.Unmarshal([]byte(body), &UpdateMetricsDashboardPanelRequest{})
+		require.Error(t, err, body)
+		assert.Equal(t, errors.KindContractInvalid, errors.Kind(err), body)
+		assert.Equal(t, want, err.Error(), body)
+	}
+}
+
+func TestUpdateMetricsDashboardPanelRequest_KeepsPointsAsSent(t *testing.T) {
+	var req UpdateMetricsDashboardPanelRequest
+	body := `{"apiVersion":"v3","points":[{"deviceName":"b","resourceName":"r"},{"deviceName":"a","resourceName":"r"},{"deviceName":"b","resourceName":"r"}]}`
+	require.NoError(t, json.Unmarshal([]byte(body), &req))
+	require.NotNil(t, req.Points)
+	assert.Equal(t, []dtos.MetricsDashboardPanelPoint{
+		{DeviceName: "b", ResourceName: "r"}, {DeviceName: "a", ResourceName: "r"}, {DeviceName: "b", ResourceName: "r"},
+	}, *req.Points)
+	assert.Nil(t, req.Tags)
 }

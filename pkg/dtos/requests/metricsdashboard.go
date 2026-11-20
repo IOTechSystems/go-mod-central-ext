@@ -121,15 +121,18 @@ func (a *AddMetricsDashboardPanelRequest) UnmarshalJSON(b []byte) error {
 }
 
 // UpdateMetricsDashboardPanelRequest defines the Request Content for PATCH MetricsDashboardPanel; only the fields set are
-// changed, and a set empty Devices means every device. Validate checks each field set on its own; rules across the
-// dashboard are central-ui's, on the dashboard it stores.
+// changed, and a set empty Devices means every device. Setting Points switches the panel to its points and clears its
+// tags and devices; setting Tags switches it to tags and clears its points; setting both is refused. Validate checks
+// each field set on its own; rules across the dashboard, such as Devices on a panel left with points, are central-ui's,
+// on the dashboard it stores.
 type UpdateMetricsDashboardPanelRequest struct {
 	dtoCommon.BaseRequest `json:",inline"`
-	Title                 *string                      `json:"title,omitempty"`
-	ChartType             *string                      `json:"chartType,omitempty"`
-	Tags                  *[]string                    `json:"tags,omitempty"`
-	Devices               *[]string                    `json:"devices,omitempty"`
-	Layout                *dtos.MetricsDashboardLayout `json:"layout,omitempty"`
+	Title                 *string                            `json:"title,omitempty"`
+	ChartType             *string                            `json:"chartType,omitempty"`
+	Tags                  *[]string                          `json:"tags,omitempty"`
+	Devices               *[]string                          `json:"devices,omitempty"`
+	Points                *[]dtos.MetricsDashboardPanelPoint `json:"points,omitempty"`
+	Layout                *dtos.MetricsDashboardLayout       `json:"layout,omitempty"`
 }
 
 // Validate satisfies the Validator interface
@@ -137,8 +140,11 @@ func (u *UpdateMetricsDashboardPanelRequest) Validate() error {
 	if err := edgexCommon.Validate(u); err != nil {
 		return err
 	}
-	if u.Title == nil && u.ChartType == nil && u.Tags == nil && u.Devices == nil && u.Layout == nil {
-		return errors.NewCommonEdgeX(errors.KindContractInvalid, "the update sets none of title, chartType, tags, devices and layout", nil)
+	if u.Title == nil && u.ChartType == nil && u.Tags == nil && u.Points == nil && u.Devices == nil && u.Layout == nil {
+		return errors.NewCommonEdgeX(errors.KindContractInvalid, "the update sets none of title, chartType, tags, points, devices and layout", nil)
+	}
+	if u.Tags != nil && u.Points != nil {
+		return errors.NewCommonEdgeX(errors.KindContractInvalid, "the update sets both tags and points", nil)
 	}
 	if u.Title != nil && strings.TrimSpace(*u.Title) == "" {
 		return errors.NewCommonEdgeX(errors.KindContractInvalid, "panel title is required", nil)
@@ -152,6 +158,14 @@ func (u *UpdateMetricsDashboardPanelRequest) Validate() error {
 			return err
 		}
 		*u.Tags = tags
+	}
+	if u.Points != nil {
+		if err := dtos.ValidateMetricsDashboardPoints(*u.Points); err != nil {
+			return err
+		}
+		if u.Devices != nil && len(*u.Devices) > 0 {
+			return errors.NewCommonEdgeX(errors.KindContractInvalid, "the update sets devices beside points", nil)
+		}
 	}
 	if u.Layout != nil {
 		return u.Layout.Validate()
@@ -167,6 +181,7 @@ func (u *UpdateMetricsDashboardPanelRequest) UnmarshalJSON(b []byte) error {
 		ChartType *string
 		Tags      *[]string
 		Devices   *[]string
+		Points    *[]dtos.MetricsDashboardPanelPoint
 		Layout    *dtos.MetricsDashboardLayout
 	}
 	if err := json.Unmarshal(b, &alias); err != nil {
