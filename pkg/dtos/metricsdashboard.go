@@ -13,7 +13,7 @@ import (
 
 const MetricsDashboardGridColumns = 12
 
-// MetricsDashboard is a dashboard an agent or a user builds from tagged points; created and modified are epoch ms
+// MetricsDashboard is a dashboard an agent or a user builds from device resources; created and modified are epoch ms
 type MetricsDashboard struct {
 	Id          string                  `json:"id,omitempty"`
 	Name        string                  `json:"name"`
@@ -33,14 +33,23 @@ type MetricsDashboardRange struct {
 	End   int64  `json:"end,omitempty"`
 }
 
-// MetricsDashboardPanel selects the points carrying one of Tags, limited to Devices when it is not empty
+// MetricsDashboardPanel selects its points one of two ways, never both: by Tags, the points carrying one of them,
+// limited to Devices when it is not empty; or by Points, the device resources it lists, in order. Devices only
+// narrows Tags.
 type MetricsDashboardPanel struct {
-	Id        string                 `json:"id,omitempty"`
-	Title     string                 `json:"title"`
-	ChartType string                 `json:"chartType"`
-	Tags      []string               `json:"tags"`
-	Devices   []string               `json:"devices,omitempty"`
-	Layout    MetricsDashboardLayout `json:"layout"`
+	Id        string                       `json:"id,omitempty"`
+	Title     string                       `json:"title"`
+	ChartType string                       `json:"chartType"`
+	Tags      []string                     `json:"tags,omitempty"`
+	Devices   []string                     `json:"devices,omitempty"`
+	Points    []MetricsDashboardPanelPoint `json:"points,omitempty"`
+	Layout    MetricsDashboardLayout       `json:"layout"`
+}
+
+// MetricsDashboardPanelPoint is a device resource a panel lists by name
+type MetricsDashboardPanelPoint struct {
+	DeviceName   string `json:"deviceName"`
+	ResourceName string `json:"resourceName"`
 }
 
 // MetricsDashboardLayout places a panel on a 12-column grid; the zero layout asks central-ui to place it
@@ -137,8 +146,9 @@ func (r MetricsDashboardRange) Validate() error {
 	return nil
 }
 
-// Validate de-duplicates the panel's tags, then checks the panel on its own. Panel ids are checked across the
-// dashboard by MetricsDashboard.Validate.
+// Validate de-duplicates the panel's tags, or drops an empty Devices beside Points, then checks the panel on its own.
+// Points are kept as sent, order and repeats included. Panel ids are checked across the dashboard by
+// MetricsDashboard.Validate.
 func (p *MetricsDashboardPanel) Validate() error {
 	if strings.TrimSpace(p.Title) == "" {
 		return invalid("panel title is required")
@@ -146,11 +156,27 @@ func (p *MetricsDashboardPanel) Validate() error {
 	if strings.TrimSpace(p.ChartType) == "" {
 		return invalid(fmt.Sprintf("panel %s needs a chartType", p.Title))
 	}
-	tags, err := ValidateMetricsDashboardTags(p.Tags)
-	if err != nil {
-		return errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("panel %s", p.Title), err)
+	hasTags, hasPoints := len(p.Tags) > 0, len(p.Points) > 0
+	switch {
+	case hasTags && hasPoints:
+		return invalid(fmt.Sprintf("panel %s has both tags and points", p.Title))
+	case hasPoints:
+		if err := validateMetricsDashboardPoints(p.Points, fmt.Sprintf(" of panel %s", p.Title)); err != nil {
+			return err
+		}
+		if len(p.Devices) > 0 {
+			return invalid(fmt.Sprintf("panel %s has devices beside points", p.Title))
+		}
+		p.Tags, p.Devices = nil, nil
+	case hasTags:
+		tags, err := ValidateMetricsDashboardTags(p.Tags)
+		if err != nil {
+			return errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("panel %s", p.Title), err)
+		}
+		p.Tags = tags
+	default:
+		return invalid(fmt.Sprintf("panel %s needs tags or points", p.Title))
 	}
-	p.Tags = tags
 	if err := p.Layout.Validate(); err != nil {
 		return errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("panel %s", p.Title), err)
 	}
@@ -171,6 +197,25 @@ func ValidateMetricsDashboardTags(tags []string) ([]string, error) {
 		}
 	}
 	return tags, nil
+}
+
+// ValidateMetricsDashboardPoints returns an error when the list is empty or a point has a blank deviceName or
+// resourceName. Points are counted from 1 in the error.
+func ValidateMetricsDashboardPoints(points []MetricsDashboardPanelPoint) error {
+	if len(points) == 0 {
+		return invalid("at least one point is required")
+	}
+	return validateMetricsDashboardPoints(points, "")
+}
+
+// validateMetricsDashboardPoints checks each point's names; where follows "point <i>" in the error
+func validateMetricsDashboardPoints(points []MetricsDashboardPanelPoint, where string) error {
+	for i, pt := range points {
+		if strings.TrimSpace(pt.DeviceName) == "" || strings.TrimSpace(pt.ResourceName) == "" {
+			return invalid(fmt.Sprintf("point %d%s needs a deviceName and a resourceName", i+1, where))
+		}
+	}
+	return nil
 }
 
 // Validate checks the layout on its own; a zero layout passes and means "place it for me"
