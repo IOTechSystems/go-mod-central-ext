@@ -51,19 +51,18 @@ const (
 	EdgeHistorianServiceKey             = "edge-historian"
 )
 
-// Constants related for Notification Category
+// Constants related for Notifications
 const (
-	DisconnectAlert      = "Disconnection"
-	DeviceOperatingState = "DeviceOperatingState"
-)
+	DisconnectAlert = "Disconnection"
 
-// Constants related for DeviceChangedNotification
-const (
-	DeviceCreateAction = "Device creation"
-	DeviceUpdateAction = "Device update"
-	DeviceRemoveAction = "Device removal"
+	DeviceChangedNotificationCategory           = "DEVICE_CHANGED"
+	DeviceProfileChangedNotificationCategory    = "DEVICE_PROFILE_CHANGED"
+	DeviceServiceChangedNotificationCategory    = "DEVICE_SERVICE_CHANGED"
+	ProvisionWatcherChangedNotificationCategory = "PROVISION_WATCHER_CHANGED"
 
-	DeviceChangedNotificationCategory = "DEVICE_CHANGED"
+	// System event tag keys set on update system events when the state changes
+	SystemEventTagAdminState     = "adminState"
+	SystemEventTagOperatingState = "operatingState"
 )
 
 const (
