@@ -25,6 +25,7 @@ const (
 	Name          = "name"
 	PanelId       = "panelId"
 	Tag           = "tag"
+	SearchQuery   = "query"
 )
 
 const (
@@ -88,8 +89,8 @@ const (
 	ApiMetricsDashboardByIdRoute      = ApiMetricsDashboardPath + "/" + edgexCommon.Id + "/:" + edgexCommon.Id
 	ApiMetricsDashboardPanelRoute     = ApiMetricsDashboardByIdRoute + "/panel"
 	ApiMetricsDashboardPanelByIdRoute = ApiMetricsDashboardPanelRoute + "/" + edgexCommon.Id + "/:" + PanelId
-	ApiMetricsDashboardTagsRoute      = ApiMetricsDashboardPath + "/tags"
-	ApiMetricsDashboardPointsRoute    = ApiMetricsDashboardPath + "/points"
+	ApiMetricsDashboardOverviewRoute  = ApiMetricsDashboardPath + "/overview"
+	ApiMetricsDashboardResourcesRoute = ApiMetricsDashboardPath + "/resources"
 	ApiMetricsDashboardArchiveRoute   = ApiMetricsDashboardPath + "/archive"
 )
 

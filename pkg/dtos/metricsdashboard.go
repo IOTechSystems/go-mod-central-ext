@@ -13,7 +13,7 @@ import (
 
 const MetricsDashboardGridColumns = 12
 
-// MetricsDashboard is a dashboard an agent or a user builds from tagged points; created and modified are epoch ms
+// MetricsDashboard is a dashboard an agent or a user builds from device resources; created and modified are epoch ms
 type MetricsDashboard struct {
 	Id          string                  `json:"id,omitempty"`
 	Name        string                  `json:"name"`
@@ -33,14 +33,33 @@ type MetricsDashboardRange struct {
 	End   int64  `json:"end,omitempty"`
 }
 
-// MetricsDashboardPanel selects the points carrying one of Tags, limited to Devices when it is not empty
+// MetricsDashboardPanel charts the union of what its selectors select
 type MetricsDashboardPanel struct {
-	Id        string                 `json:"id,omitempty"`
-	Title     string                 `json:"title"`
-	ChartType string                 `json:"chartType"`
-	Tags      []string               `json:"tags"`
-	Devices   []string               `json:"devices,omitempty"`
-	Layout    MetricsDashboardLayout `json:"layout"`
+	Id        string                     `json:"id,omitempty"`
+	Title     string                     `json:"title"`
+	ChartType string                     `json:"chartType"`
+	Select    []MetricsDashboardSelector `json:"select"`
+	Layout    MetricsDashboardLayout     `json:"layout"`
+}
+
+// MetricsDashboardSelector is one entry of a panel's select; a panel charts every point its selectors pick.
+// The set fields must all match: set ResourceName or Tag, and at most one of DeviceName and ProfileName.
+// Without DeviceName it is a rule that also picks devices added later.
+// Selectors may pick the same point, so whoever resolves them must remove the duplicates.
+// For example:
+//
+//	{"deviceName": "AHU-1", "resourceName": "Supply Air Temp"}   AHU-1's Supply Air Temp
+//	{"deviceName": "AHU-1", "tag": "hs4:zone-air-temp"}         AHU-1's resources tagged hs4:zone-air-temp
+//	{"profileName": "AHU", "tag": "hs4:zone-air-temp"}          the same on every device of profile AHU
+//	{"resourceName": "Lobby IAQ Sensor"}                        that resource on every device that has it
+//	{"tag": "hs4:co2"}                                          every resource tagged hs4:co2, on any device
+//
+// A nil field is absent; a field sent as "" is refused as blank.
+type MetricsDashboardSelector struct {
+	DeviceName   *string `json:"deviceName,omitempty"`
+	ProfileName  *string `json:"profileName,omitempty"`
+	ResourceName *string `json:"resourceName,omitempty"`
+	Tag          *string `json:"tag,omitempty"`
 }
 
 // MetricsDashboardLayout places a panel on a 12-column grid; the zero layout asks central-ui to place it
@@ -62,32 +81,47 @@ type MetricsDashboardInfo struct {
 	Modified    int64  `json:"modified"`
 }
 
-// MetricsDashboardTagSummary counts the points and devices that carry each tag
+// MetricsDashboardOverview is what an agent reads first of what a panel can select: the tags stored on readable
+// resources and the profiles, with PointCount and DeviceCount over every readable resource on every device. Its
+// length does not grow with the number of resources; the search finds resources by keyword.
+type MetricsDashboardOverview struct {
+	PointCount  int                              `json:"pointCount"`
+	DeviceCount int                              `json:"deviceCount"`
+	Tags        []MetricsDashboardTagSummary     `json:"tags"`
+	Profiles    []MetricsDashboardProfileSummary `json:"profiles"`
+}
+
+// MetricsDashboardTagSummary is one tag in the overview: how many points and devices carry it, and their units
 type MetricsDashboardTagSummary struct {
-	TotalPoints  int                      `json:"totalPoints"`
-	TotalDevices int                      `json:"totalDevices"`
-	Tags         []MetricsDashboardTagRow `json:"tags"`
+	Tag         string   `json:"tag"`
+	PointCount  int      `json:"pointCount"`
+	DeviceCount int      `json:"deviceCount"`
+	Units       []string `json:"units"`
 }
 
-type MetricsDashboardTagRow struct {
-	Tag     string   `json:"tag"`
-	Points  int      `json:"points"`
-	Devices int      `json:"devices"`
-	Units   []string `json:"units"`
+// MetricsDashboardProfileSummary is one profile in the overview: how many devices it has and how many readable
+// resources, so an agent sees where untagged resources live and which profile to search
+type MetricsDashboardProfileSummary struct {
+	ProfileName   string `json:"profileName"`
+	DeviceCount   int    `json:"deviceCount"`
+	ResourceCount int    `json:"resourceCount"`
 }
 
-// MetricsDashboardPoint is a device resource carrying a tag
-type MetricsDashboardPoint struct {
-	DeviceName   string `json:"deviceName"`
-	ResourceName string `json:"resourceName"`
-	Tag          string `json:"tag"`
-	Units        string `json:"units,omitempty"`
-	Description  string `json:"description,omitempty"`
+// MetricsDashboardResource is one search result: a profile's readable resource, which every device of that profile
+// has, DeviceCount counting them; its ProfileName and ResourceName make a selector as they stand. Tags holds the tags
+// stored on it. It is not a point, which is one device's resource.
+type MetricsDashboardResource struct {
+	ProfileName  string   `json:"profileName"`
+	ResourceName string   `json:"resourceName"`
+	DeviceCount  int      `json:"deviceCount"`
+	Units        string   `json:"units,omitempty"`
+	ValueType    string   `json:"valueType"`
+	Tags         []string `json:"tags"`
+	Description  string   `json:"description,omitempty"`
 }
 
-// Validate de-duplicates the panels' tags and turns nil panels into an empty list, then checks the shape of the
-// dashboard. Tags are kept as sent, spaces included. Which chart types exist and how many panels a dashboard holds
-// are central-ui's rules, not checked here.
+// Validate turns nil panels into an empty list, then checks the shape of the dashboard. Which chart types exist and
+// how many panels a dashboard holds are central-ui's rules, not checked here.
 func (d *MetricsDashboard) Validate() error {
 	if d.Panels == nil {
 		d.Panels = []MetricsDashboardPanel{}
@@ -137,8 +171,8 @@ func (r MetricsDashboardRange) Validate() error {
 	return nil
 }
 
-// Validate de-duplicates the panel's tags, then checks the panel on its own. Panel ids are checked across the
-// dashboard by MetricsDashboard.Validate.
+// Validate checks the panel on its own. Selectors are kept as sent, order, repeats and spaces included. Panel ids
+// are checked across the dashboard by MetricsDashboard.Validate.
 func (p *MetricsDashboardPanel) Validate() error {
 	if strings.TrimSpace(p.Title) == "" {
 		return invalid("panel title is required")
@@ -146,31 +180,61 @@ func (p *MetricsDashboardPanel) Validate() error {
 	if strings.TrimSpace(p.ChartType) == "" {
 		return invalid(fmt.Sprintf("panel %s needs a chartType", p.Title))
 	}
-	tags, err := ValidateMetricsDashboardTags(p.Tags)
-	if err != nil {
-		return errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("panel %s", p.Title), err)
+	if len(p.Select) == 0 {
+		return invalid(fmt.Sprintf("panel %s needs at least one selector", p.Title))
 	}
-	p.Tags = tags
+	if err := validateMetricsDashboardSelectors(p.Select, fmt.Sprintf(" of panel %s", p.Title)); err != nil {
+		return err
+	}
 	if err := p.Layout.Validate(); err != nil {
 		return errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("panel %s", p.Title), err)
 	}
 	return nil
 }
 
-// ValidateMetricsDashboardTags returns the tags de-duplicated in order, or an error when none is left or one is not
-// <key>:<value> with a non-blank key and value. Each tag is kept as sent, spaces included.
-func ValidateMetricsDashboardTags(tags []string) ([]string, error) {
-	tags = dedupeTags(tags)
-	if len(tags) == 0 {
-		return nil, invalid("at least one tag is required")
+// ValidateMetricsDashboardSelect returns an error when the list is empty or a selector is not valid: a field set but
+// blank, neither resourceName nor tag, both deviceName and profileName, or a tag that is not <key>:<value> with a
+// non-blank key and value. Selectors are counted from 1 in the error.
+func ValidateMetricsDashboardSelect(selectors []MetricsDashboardSelector) error {
+	if len(selectors) == 0 {
+		return invalid("at least one selector is required")
 	}
-	for _, tag := range tags {
-		key, value, ok := strings.Cut(tag, ":")
-		if !ok || strings.TrimSpace(key) == "" || strings.TrimSpace(value) == "" {
-			return nil, invalid(fmt.Sprintf("tag %q is not <key>:<value>", tag))
+	return validateMetricsDashboardSelectors(selectors, "")
+}
+
+// validateMetricsDashboardSelectors checks each selector; where follows "selector <i>" in the error
+func validateMetricsDashboardSelectors(selectors []MetricsDashboardSelector, where string) error {
+	for i, s := range selectors {
+		if err := s.validate(fmt.Sprintf("selector %d%s", i+1, where)); err != nil {
+			return err
 		}
 	}
-	return tags, nil
+	return nil
+}
+
+// validate checks the selector on its own; name starts the error
+func (s MetricsDashboardSelector) validate(name string) error {
+	for _, f := range []struct {
+		field string
+		value *string
+	}{{"deviceName", s.DeviceName}, {"profileName", s.ProfileName}, {"resourceName", s.ResourceName}, {"tag", s.Tag}} {
+		if f.value != nil && strings.TrimSpace(*f.value) == "" {
+			return invalid(fmt.Sprintf("%s has a blank %s", name, f.field))
+		}
+	}
+	if s.ResourceName == nil && s.Tag == nil {
+		return invalid(fmt.Sprintf("%s needs a resourceName or a tag", name))
+	}
+	if s.DeviceName != nil && s.ProfileName != nil {
+		return invalid(fmt.Sprintf("%s sets both deviceName and profileName", name))
+	}
+	if s.Tag != nil {
+		key, value, ok := strings.Cut(*s.Tag, ":")
+		if !ok || strings.TrimSpace(key) == "" || strings.TrimSpace(value) == "" {
+			return invalid(fmt.Sprintf("%s: tag %q is not <key>:<value>", name, *s.Tag))
+		}
+	}
+	return nil
 }
 
 // Validate checks the layout on its own; a zero layout passes and means "place it for me"
@@ -182,19 +246,6 @@ func (l MetricsDashboardLayout) Validate() error {
 		return invalid(fmt.Sprintf("layout %+v is outside the %d-column grid", l, MetricsDashboardGridColumns))
 	}
 	return nil
-}
-
-func dedupeTags(tags []string) []string {
-	seen := make(map[string]bool, len(tags))
-	out := make([]string, 0, len(tags))
-	for _, t := range tags {
-		if seen[t] {
-			continue
-		}
-		seen[t] = true
-		out = append(out, t)
-	}
-	return out
 }
 
 func metricsDashboardLastList() string {

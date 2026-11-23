@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"slices"
 	"testing"
 
 	"github.com/IOTechSystems/go-mod-central-ext/v4/pkg/common"
@@ -15,8 +16,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func ptr(s string) *string { return &s }
+
 func validMetricsDashboardPanel() MetricsDashboardPanel {
-	return MetricsDashboardPanel{Title: "Temps", ChartType: "line", Tags: []string{"hs4:zone-air-temp"}}
+	return MetricsDashboardPanel{Title: "Temps", ChartType: "line", Select: []MetricsDashboardSelector{{Tag: ptr("hs4:zone-air-temp")}}}
+}
+
+func selectorsMetricsDashboardPanel() MetricsDashboardPanel {
+	return MetricsDashboardPanel{Title: "Temps", ChartType: "line", Select: []MetricsDashboardSelector{
+		{Tag: ptr("hs4:co2")},
+		{ProfileName: ptr("Johnson-BMS"), ResourceName: ptr("Lobby IAQ Sensor")},
+	}}
 }
 
 func validMetricsDashboard() MetricsDashboard {
@@ -43,10 +53,25 @@ func TestMetricsDashboardValidate_Refusals(t *testing.T) {
 		{"end without start", func(d *MetricsDashboard) { d.Range = MetricsDashboardRange{End: 1000} }},
 		{"panel without title", withPanel(func(p *MetricsDashboardPanel) { p.Title = " " })},
 		{"blank chartType", withPanel(func(p *MetricsDashboardPanel) { p.ChartType = " " })},
-		{"no tag", withPanel(func(p *MetricsDashboardPanel) { p.Tags = nil })},
-		{"tag without colon", withPanel(func(p *MetricsDashboardPanel) { p.Tags = []string{"zone-air-temp"} })},
-		{"blank key", withPanel(func(p *MetricsDashboardPanel) { p.Tags = []string{" :zone-air-temp"} })},
-		{"blank value", withPanel(func(p *MetricsDashboardPanel) { p.Tags = []string{"hs4: "} })},
+		{"nil select", withPanel(func(p *MetricsDashboardPanel) { p.Select = nil })},
+		{"empty select", withPanel(func(p *MetricsDashboardPanel) { p.Select = []MetricsDashboardSelector{} })},
+		{"empty selector", withPanel(func(p *MetricsDashboardPanel) { p.Select[0] = MetricsDashboardSelector{} })},
+		{"only a deviceName", withPanel(func(p *MetricsDashboardPanel) { p.Select[0] = MetricsDashboardSelector{DeviceName: ptr("J")} })},
+		{"only a profileName", withPanel(func(p *MetricsDashboardPanel) { p.Select[0] = MetricsDashboardSelector{ProfileName: ptr("P")} })},
+		{"both deviceName and profileName", withPanel(func(p *MetricsDashboardPanel) {
+			p.Select[0].DeviceName, p.Select[0].ProfileName = ptr("J"), ptr("P")
+		})},
+		{"empty tag", withPanel(func(p *MetricsDashboardPanel) { p.Select[0].Tag = ptr("") })},
+		{"blank resourceName", withPanel(func(p *MetricsDashboardPanel) { p.Select[0].ResourceName = ptr(" ") })},
+		{"empty deviceName", withPanel(func(p *MetricsDashboardPanel) { p.Select[0].DeviceName = ptr("") })},
+		{"blank profileName", withPanel(func(p *MetricsDashboardPanel) { p.Select[0].ProfileName = ptr("  ") })},
+		{"tag without colon", withPanel(func(p *MetricsDashboardPanel) { p.Select[0].Tag = ptr("zone-air-temp") })},
+		{"blank key", withPanel(func(p *MetricsDashboardPanel) { p.Select[0].Tag = ptr(" :zone-air-temp") })},
+		{"blank value", withPanel(func(p *MetricsDashboardPanel) { p.Select[0].Tag = ptr("hs4: ") })},
+		{"bad tag beside a resourceName", withPanel(func(p *MetricsDashboardPanel) {
+			*p = selectorsMetricsDashboardPanel()
+			p.Select[1].Tag = ptr("co2")
+		})},
 		{"duplicate panel id", func(d *MetricsDashboard) {
 			p := validMetricsDashboardPanel()
 			p.Id = "a"
@@ -76,8 +101,35 @@ func TestMetricsDashboardValidate_Accepts(t *testing.T) {
 		edit func(d *MetricsDashboard)
 	}{
 		{"fixed range", func(d *MetricsDashboard) { d.Range = MetricsDashboardRange{Start: 1, End: 2} }},
-		{"tags of two keys in one panel", func(d *MetricsDashboard) {
-			d.Panels[0].Tags = []string{"hs4:zone-air-temp", "eo66PointType:temp"}
+		{"selectors of two keys in one panel", func(d *MetricsDashboard) {
+			d.Panels[0].Select = append(d.Panels[0].Select, MetricsDashboardSelector{Tag: ptr("eo66PointType:temp")})
+		}},
+		{"a tag on a device", func(d *MetricsDashboard) {
+			d.Panels[0].Select = []MetricsDashboardSelector{{DeviceName: ptr("AHU-1"), Tag: ptr("hs4:zone-air-temp")}}
+		}},
+		{"a tag on a profile", func(d *MetricsDashboard) {
+			d.Panels[0].Select = []MetricsDashboardSelector{{ProfileName: ptr("AHU"), Tag: ptr("hs4:zone-air-temp")}}
+		}},
+		{"a resourceName on a device", func(d *MetricsDashboard) {
+			d.Panels[0].Select = []MetricsDashboardSelector{{DeviceName: ptr("S"), ResourceName: ptr("Lobby Temperature")}}
+		}},
+		{"a resourceName on a profile", func(d *MetricsDashboard) {
+			d.Panels[0].Select = []MetricsDashboardSelector{{ProfileName: ptr("Johnson-BMS"), ResourceName: ptr("Lobby IAQ Sensor")}}
+		}},
+		{"a resourceName on every device", func(d *MetricsDashboard) {
+			d.Panels[0].Select = []MetricsDashboardSelector{{ResourceName: ptr("Lobby IAQ Sensor")}}
+		}},
+		{"a resourceName and a tag", func(d *MetricsDashboard) {
+			d.Panels[0].Select = []MetricsDashboardSelector{{ResourceName: ptr("Temp"), Tag: ptr("hs4:zone-air-temp")}}
+		}},
+		{"every field but profileName", func(d *MetricsDashboard) {
+			d.Panels[0].Select = []MetricsDashboardSelector{{DeviceName: ptr("S"), ResourceName: ptr("Temp"), Tag: ptr("hs4:zone-air-temp")}}
+		}},
+		{"a tag of any key", func(d *MetricsDashboard) {
+			d.Panels[0].Select = []MetricsDashboardSelector{{Tag: ptr("site:north")}}
+		}},
+		{"a tag value holding a colon", func(d *MetricsDashboard) {
+			d.Panels[0].Select = []MetricsDashboardSelector{{Tag: ptr("site:Zone:1")}}
 		}},
 		{"any non-blank chartType", func(d *MetricsDashboard) { d.Panels[0].ChartType = "no-such-type" }},
 		{"zero layout", func(d *MetricsDashboard) { d.Panels[0].Layout = MetricsDashboardLayout{} }},
@@ -89,6 +141,7 @@ func TestMetricsDashboardValidate_Accepts(t *testing.T) {
 				d.Panels[i] = validMetricsDashboardPanel()
 			}
 		}},
+		{"a rule and a profile's resource", func(d *MetricsDashboard) { d.Panels[0] = selectorsMetricsDashboardPanel() }},
 		{"panels without ids", func(d *MetricsDashboard) {
 			d.Panels = []MetricsDashboardPanel{validMetricsDashboardPanel(), validMetricsDashboardPanel()}
 		}},
@@ -108,16 +161,20 @@ func TestMetricsDashboardValidate_Accepts(t *testing.T) {
 	}
 }
 
-func TestMetricsDashboardValidate_DedupesTags(t *testing.T) {
+func TestMetricsDashboardValidate_KeepsSelectorsAsSent(t *testing.T) {
 	d := validMetricsDashboard()
-	d.Panels[0].Tags = []string{"hs4:b", "hs4:a", "hs4:b", " hs4:a "}
+	d.Panels[0].Select = []MetricsDashboardSelector{
+		{Tag: ptr("hs4:b")}, {DeviceName: ptr(" J "), ResourceName: ptr(" Temp ")}, {Tag: ptr("hs4:b")},
+		{DeviceName: ptr(" J "), ResourceName: ptr(" Temp ")},
+	}
+	want := slices.Clone(d.Panels[0].Select)
 	require.NoError(t, d.Validate())
-	assert.Equal(t, []string{"hs4:b", "hs4:a", " hs4:a "}, d.Panels[0].Tags)
+	assert.Equal(t, want, d.Panels[0].Select)
 }
 
 func TestMetricsDashboard_DecodesUnknownField(t *testing.T) {
 	doc := `{"name":"temps","range":{"last":"5m"},"future":1,
-		"panels":[{"title":"Temps","chartType":"line","tags":["hs4:t"],"rightAxis":true,"layout":{"x":0,"y":0,"w":6,"h":4}}]}`
+		"panels":[{"title":"Temps","chartType":"line","select":[{"tag":"hs4:t"}],"rightAxis":true,"layout":{"x":0,"y":0,"w":6,"h":4}}]}`
 	var d MetricsDashboard
 	require.NoError(t, json.Unmarshal([]byte(doc), &d))
 	assert.Equal(t, "temps", d.Name)
@@ -159,10 +216,132 @@ func TestMetricsDashboardValidate_EmptyPanelsIsArray(t *testing.T) {
 }
 
 func TestMetricsDashboardPanelValidate_NamesThePanel(t *testing.T) {
-	p := MetricsDashboardPanel{Title: "Zone temp", ChartType: "line", Tags: []string{"hs4:t"}, Layout: MetricsDashboardLayout{X: 10, W: 6, H: 4}}
+	p := MetricsDashboardPanel{Title: "Zone temp", ChartType: "line", Select: []MetricsDashboardSelector{{Tag: ptr("hs4:t")}}, Layout: MetricsDashboardLayout{X: 10, W: 6, H: 4}}
 	err := p.Validate()
 	require.Error(t, err)
 	assert.Equal(t, errors.KindContractInvalid, errors.Kind(err))
 	assert.Contains(t, err.Error(), "panel Zone temp")
 	assert.Contains(t, err.Error(), "outside the 12-column grid")
+}
+
+func TestMetricsDashboardPanelValidate_Texts(t *testing.T) {
+	tests := []struct {
+		name string
+		edit func(p *MetricsDashboardPanel)
+		want string
+	}{
+		{"no selectors", func(p *MetricsDashboardPanel) { p.Select = nil }, "panel Temps needs at least one selector"},
+		{"neither resourceName nor tag", func(p *MetricsDashboardPanel) { p.Select[1].ResourceName = nil },
+			"selector 2 of panel Temps needs a resourceName or a tag"},
+		{"deviceName and profileName", func(p *MetricsDashboardPanel) { p.Select[1].DeviceName = ptr("J") },
+			"selector 2 of panel Temps sets both deviceName and profileName"},
+		{"blank deviceName", func(p *MetricsDashboardPanel) { p.Select[0].DeviceName = ptr("") }, "selector 1 of panel Temps has a blank deviceName"},
+		{"blank profileName", func(p *MetricsDashboardPanel) { p.Select[1].ProfileName = ptr(" ") }, "selector 2 of panel Temps has a blank profileName"},
+		{"blank resourceName", func(p *MetricsDashboardPanel) { p.Select[1].ResourceName = ptr("  ") }, "selector 2 of panel Temps has a blank resourceName"},
+		{"blank tag", func(p *MetricsDashboardPanel) { p.Select[0].Tag = ptr("") }, "selector 1 of panel Temps has a blank tag"},
+		{"bad tag", func(p *MetricsDashboardPanel) { p.Select[0].Tag = ptr("Lobby IAQ Sensor") },
+			`selector 1 of panel Temps: tag "Lobby IAQ Sensor" is not <key>:<value>`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := selectorsMetricsDashboardPanel()
+			tt.edit(&p)
+			err := p.Validate()
+			require.Error(t, err)
+			assert.Equal(t, errors.KindContractInvalid, errors.Kind(err))
+			assert.Equal(t, tt.want, err.Error())
+		})
+	}
+}
+
+func TestValidateMetricsDashboardSelect_Texts(t *testing.T) {
+	tests := map[string]struct {
+		selectors []MetricsDashboardSelector
+		want      string
+	}{
+		"nil":   {nil, "at least one selector is required"},
+		"empty": {[]MetricsDashboardSelector{}, "at least one selector is required"},
+		"neither resourceName nor tag": {[]MetricsDashboardSelector{{Tag: ptr("hs4:t")}, {DeviceName: ptr("J")}},
+			"selector 2 needs a resourceName or a tag"},
+		"deviceName and profileName": {[]MetricsDashboardSelector{{DeviceName: ptr("J"), ProfileName: ptr("P"), Tag: ptr("hs4:t")}},
+			"selector 1 sets both deviceName and profileName"},
+		"blank deviceName": {[]MetricsDashboardSelector{{Tag: ptr("hs4:t")}, {DeviceName: ptr(" "), Tag: ptr("hs4:t")}},
+			"selector 2 has a blank deviceName"},
+		"bad tag": {[]MetricsDashboardSelector{{Tag: ptr("hs4")}}, `selector 1: tag "hs4" is not <key>:<value>`},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			err := ValidateMetricsDashboardSelect(tt.selectors)
+			require.Error(t, err)
+			assert.Equal(t, errors.KindContractInvalid, errors.Kind(err))
+			assert.Equal(t, tt.want, err.Error())
+		})
+	}
+	assert.NoError(t, ValidateMetricsDashboardSelect(selectorsMetricsDashboardPanel().Select))
+}
+
+func TestMetricsDashboardPanel_StoredBeforeSelect(t *testing.T) {
+	var p MetricsDashboardPanel
+	require.NoError(t, json.Unmarshal([]byte(`{"title":"Temps","chartType":"line","tags":["hs4:t"],"devices":["d"]}`), &p))
+	assert.Nil(t, p.Select)
+	err := p.Validate()
+	require.Error(t, err)
+	assert.Equal(t, "panel Temps needs at least one selector", err.Error())
+}
+
+func TestMetricsDashboardPanel_JSON(t *testing.T) {
+	b, err := json.Marshal(selectorsMetricsDashboardPanel())
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"title":"Temps","chartType":"line","layout":{"x":0,"y":0,"w":0,"h":0},
+		"select":[{"tag":"hs4:co2"},{"profileName":"Johnson-BMS","resourceName":"Lobby IAQ Sensor"}]}`, string(b))
+	var p MetricsDashboardPanel
+	require.NoError(t, json.Unmarshal(b, &p))
+	assert.Equal(t, selectorsMetricsDashboardPanel(), p)
+	assert.Nil(t, p.Select[0].DeviceName)
+	assert.NoError(t, p.Validate())
+
+	s := MetricsDashboardSelector{DeviceName: ptr("S"), ResourceName: ptr("Temp"), Tag: ptr("hs4:t")}
+	b, err = json.Marshal(s)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"deviceName":"S","resourceName":"Temp","tag":"hs4:t"}`, string(b))
+	var got MetricsDashboardSelector
+	require.NoError(t, json.Unmarshal(b, &got))
+	assert.Equal(t, s, got)
+
+	require.NoError(t, json.Unmarshal([]byte(`{"title":"t","chartType":"line","select":[{"deviceName":"","tag":"hs4:t"}]}`), &p))
+	require.NotNil(t, p.Select[0].DeviceName, "an empty deviceName is sent, not absent")
+	assert.Error(t, p.Validate())
+}
+
+func TestMetricsDashboardOverview_JSON(t *testing.T) {
+	summary := MetricsDashboardOverview{
+		PointCount: 180, DeviceCount: 2,
+		Tags:     []MetricsDashboardTagSummary{{Tag: "hs4:co2", PointCount: 1, DeviceCount: 1, Units: []string{"ppm"}}},
+		Profiles: []MetricsDashboardProfileSummary{{ProfileName: "Schneider-BMS", DeviceCount: 1, ResourceCount: 92}},
+	}
+	b, err := json.Marshal(summary)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"pointCount":180,"deviceCount":2,
+		"tags":[{"tag":"hs4:co2","pointCount":1,"deviceCount":1,"units":["ppm"]}],
+		"profiles":[{"profileName":"Schneider-BMS","deviceCount":1,"resourceCount":92}]}`, string(b))
+	var got MetricsDashboardOverview
+	require.NoError(t, json.Unmarshal(b, &got))
+	assert.Equal(t, summary, got)
+}
+
+func TestMetricsDashboardResource_JSON(t *testing.T) {
+	resource := MetricsDashboardResource{ProfileName: "Johnson-BMS", ResourceName: "Lobby IAQ Sensor", DeviceCount: 1, Units: "ppm",
+		ValueType: "Float32", Tags: []string{"hs4:co2"}, Description: "Indoor air quality, CO2 ppm"}
+	b, err := json.Marshal(resource)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"profileName":"Johnson-BMS","resourceName":"Lobby IAQ Sensor","deviceCount":1,"units":"ppm",
+		"valueType":"Float32","tags":["hs4:co2"],"description":"Indoor air quality, CO2 ppm"}`, string(b))
+	var got MetricsDashboardResource
+	require.NoError(t, json.Unmarshal(b, &got))
+	assert.Equal(t, resource, got)
+
+	b, err = json.Marshal(MetricsDashboardResource{ProfileName: "p", ResourceName: "r", ValueType: "Int32", Tags: []string{}})
+	require.NoError(t, err)
+	assert.NotContains(t, string(b), `"units"`)
+	assert.NotContains(t, string(b), `"description"`)
 }

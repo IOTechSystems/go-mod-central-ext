@@ -121,15 +121,13 @@ func (a *AddMetricsDashboardPanelRequest) UnmarshalJSON(b []byte) error {
 }
 
 // UpdateMetricsDashboardPanelRequest defines the Request Content for PATCH MetricsDashboardPanel; only the fields set are
-// changed, and a set empty Devices means every device. Validate checks each field set on its own; rules across the
-// dashboard are central-ui's, on the dashboard it stores.
+// changed, and a set Select replaces the panel's whole list. Validate checks each field set on its own.
 type UpdateMetricsDashboardPanelRequest struct {
 	dtoCommon.BaseRequest `json:",inline"`
-	Title                 *string                      `json:"title,omitempty"`
-	ChartType             *string                      `json:"chartType,omitempty"`
-	Tags                  *[]string                    `json:"tags,omitempty"`
-	Devices               *[]string                    `json:"devices,omitempty"`
-	Layout                *dtos.MetricsDashboardLayout `json:"layout,omitempty"`
+	Title                 *string                          `json:"title,omitempty"`
+	ChartType             *string                          `json:"chartType,omitempty"`
+	Select                *[]dtos.MetricsDashboardSelector `json:"select,omitempty"`
+	Layout                *dtos.MetricsDashboardLayout     `json:"layout,omitempty"`
 }
 
 // Validate satisfies the Validator interface
@@ -137,8 +135,8 @@ func (u *UpdateMetricsDashboardPanelRequest) Validate() error {
 	if err := edgexCommon.Validate(u); err != nil {
 		return err
 	}
-	if u.Title == nil && u.ChartType == nil && u.Tags == nil && u.Devices == nil && u.Layout == nil {
-		return errors.NewCommonEdgeX(errors.KindContractInvalid, "the update sets none of title, chartType, tags, devices and layout", nil)
+	if u.Title == nil && u.ChartType == nil && u.Select == nil && u.Layout == nil {
+		return errors.NewCommonEdgeX(errors.KindContractInvalid, "the update sets none of title, chartType, select and layout", nil)
 	}
 	if u.Title != nil && strings.TrimSpace(*u.Title) == "" {
 		return errors.NewCommonEdgeX(errors.KindContractInvalid, "panel title is required", nil)
@@ -146,12 +144,10 @@ func (u *UpdateMetricsDashboardPanelRequest) Validate() error {
 	if u.ChartType != nil && strings.TrimSpace(*u.ChartType) == "" {
 		return errors.NewCommonEdgeX(errors.KindContractInvalid, "panel chartType is required", nil)
 	}
-	if u.Tags != nil {
-		tags, err := dtos.ValidateMetricsDashboardTags(*u.Tags)
-		if err != nil {
+	if u.Select != nil {
+		if err := dtos.ValidateMetricsDashboardSelect(*u.Select); err != nil {
 			return err
 		}
-		*u.Tags = tags
 	}
 	if u.Layout != nil {
 		return u.Layout.Validate()
@@ -165,8 +161,7 @@ func (u *UpdateMetricsDashboardPanelRequest) UnmarshalJSON(b []byte) error {
 		dtoCommon.BaseRequest
 		Title     *string
 		ChartType *string
-		Tags      *[]string
-		Devices   *[]string
+		Select    *[]dtos.MetricsDashboardSelector
 		Layout    *dtos.MetricsDashboardLayout
 	}
 	if err := json.Unmarshal(b, &alias); err != nil {
