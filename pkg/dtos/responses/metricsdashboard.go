@@ -52,35 +52,41 @@ func NewMetricsDashboardPanelResponse(requestId string, message string, statusCo
 	}
 }
 
-// MetricsDashboardTagSummaryResponse defines the Response Content for GET metrics dashboard tags
-type MetricsDashboardTagSummaryResponse struct {
-	dtoCommon.BaseResponse          `json:",inline"`
-	dtos.MetricsDashboardTagSummary `json:",inline"`
+// MetricsDashboardOverviewResponse defines the Response Content for GET metrics dashboard overview
+type MetricsDashboardOverviewResponse struct {
+	dtoCommon.BaseResponse        `json:",inline"`
+	dtos.MetricsDashboardOverview `json:",inline"`
 }
 
-func NewMetricsDashboardTagSummaryResponse(requestId string, message string, statusCode int, summary dtos.MetricsDashboardTagSummary) MetricsDashboardTagSummaryResponse {
-	rows := make([]dtos.MetricsDashboardTagRow, len(summary.Tags))
+func NewMetricsDashboardOverviewResponse(requestId string, message string, statusCode int, summary dtos.MetricsDashboardOverview) MetricsDashboardOverviewResponse {
+	rows := make([]dtos.MetricsDashboardTagSummary, len(summary.Tags))
 	for i, row := range summary.Tags {
 		row.Units = orEmpty(row.Units)
 		rows[i] = row
 	}
 	summary.Tags = rows
-	return MetricsDashboardTagSummaryResponse{
-		BaseResponse:               dtoCommon.NewBaseResponse(requestId, message, statusCode),
-		MetricsDashboardTagSummary: summary,
+	summary.Profiles = orEmpty(summary.Profiles)
+	return MetricsDashboardOverviewResponse{
+		BaseResponse:             dtoCommon.NewBaseResponse(requestId, message, statusCode),
+		MetricsDashboardOverview: summary,
 	}
 }
 
-// MetricsDashboardPointsResponse defines the Response Content for GET metrics dashboard points
-type MetricsDashboardPointsResponse struct {
+// MetricsDashboardResourcesResponse defines the Response Content for GET metrics dashboard resources, a search of profile resources
+type MetricsDashboardResourcesResponse struct {
 	dtoCommon.BaseWithTotalCountResponse `json:",inline"`
-	Points                               []dtos.MetricsDashboardPoint `json:"points"`
+	Resources                            []dtos.MetricsDashboardResource `json:"resources"`
 }
 
-func NewMetricsDashboardPointsResponse(requestId string, message string, statusCode int, totalCount int64, points []dtos.MetricsDashboardPoint) MetricsDashboardPointsResponse {
-	return MetricsDashboardPointsResponse{
+func NewMetricsDashboardResourcesResponse(requestId string, message string, statusCode int, totalCount int64, resources []dtos.MetricsDashboardResource) MetricsDashboardResourcesResponse {
+	out := make([]dtos.MetricsDashboardResource, len(resources))
+	for i, r := range resources {
+		r.Tags = orEmpty(r.Tags)
+		out[i] = r
+	}
+	return MetricsDashboardResourcesResponse{
 		BaseWithTotalCountResponse: dtoCommon.NewBaseWithTotalCountResponse(requestId, message, statusCode, totalCount),
-		Points:                     orEmpty(points),
+		Resources:                  out,
 	}
 }
 

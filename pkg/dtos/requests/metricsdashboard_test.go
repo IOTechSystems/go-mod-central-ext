@@ -18,7 +18,7 @@ func TestMetricsDashboardRequests_NeedApiVersion(t *testing.T) {
 	bodies := map[string]string{
 		"add dashboard":    `{"dashboard":{"name":"d"}}`,
 		"update dashboard": `{"name":"d"}`,
-		"add panel":        `{"panel":{"title":"t","chartType":"line","tags":["hs4:t"]}}`,
+		"add panel":        `{"panel":{"title":"t","chartType":"line","select":[{"tag":"hs4:t"}]}}`,
 		"update panel":     `{"title":"t"}`,
 	}
 	targets := map[string]func() json.Unmarshaler{
@@ -72,37 +72,37 @@ func TestUpdateMetricsDashboardPanelRequest_NeedsAChange(t *testing.T) {
 	err := json.Unmarshal([]byte(`{"apiVersion":"v3"}`), &req)
 	require.Error(t, err)
 	assert.Equal(t, errors.KindContractInvalid, errors.Kind(err))
+	assert.Equal(t, "the update sets none of title, chartType, select and layout", err.Error())
 
 	for _, body := range []string{
 		`{"apiVersion":"v3","title":"t"}`,
 		`{"apiVersion":"v3","chartType":"bar"}`,
-		`{"apiVersion":"v3","tags":["hs4:t"]}`,
-		`{"apiVersion":"v3","devices":[]}`,
+		`{"apiVersion":"v3","select":[{"tag":"hs4:t"}]}`,
 		`{"apiVersion":"v3","layout":{"x":0,"y":0,"w":6,"h":4}}`,
 	} {
 		assert.NoError(t, json.Unmarshal([]byte(body), &UpdateMetricsDashboardPanelRequest{}), body)
 	}
 }
 
-func TestUpdateMetricsDashboardPanelRequest_EmptyDevicesIsSet(t *testing.T) {
-	var req UpdateMetricsDashboardPanelRequest
-	require.NoError(t, json.Unmarshal([]byte(`{"apiVersion":"v3","devices":[]}`), &req))
-	require.NotNil(t, req.Devices)
-	assert.Empty(t, *req.Devices)
-
-	devices := []string{}
-	b, err := json.Marshal(UpdateMetricsDashboardPanelRequest{Devices: &devices})
-	require.NoError(t, err)
-	assert.Contains(t, string(b), `"devices":[]`)
-	assert.NotContains(t, string(b), `"title"`)
+func TestUpdateMetricsDashboardPanelRequest_OldFieldsAreNoChange(t *testing.T) {
+	for _, body := range []string{
+		`{"apiVersion":"v3","tags":["hs4:t"]}`,
+		`{"apiVersion":"v3","devices":["d"]}`,
+		`{"apiVersion":"v3","points":[{"deviceName":"d","resourceName":"r"}]}`,
+	} {
+		err := json.Unmarshal([]byte(body), &UpdateMetricsDashboardPanelRequest{})
+		require.Error(t, err, body)
+		assert.Equal(t, "the update sets none of title, chartType, select and layout", err.Error(), body)
+	}
 }
 
 func TestAddMetricsDashboardPanelRequest_DropsId(t *testing.T) {
 	var req AddMetricsDashboardPanelRequest
-	body := `{"apiVersion":"v3","panel":{"id":"mine","title":"t","chartType":"line","tags":["hs4:t"]}}`
+	body := `{"apiVersion":"v3","panel":{"id":"mine","title":"t","chartType":"line","select":[{"tag":"hs4:t"}]}}`
 	require.NoError(t, json.Unmarshal([]byte(body), &req))
 	assert.Empty(t, req.Panel.Id)
-	assert.Equal(t, dtos.MetricsDashboardPanel{Title: "t", ChartType: "line", Tags: []string{"hs4:t"}}, req.Panel)
+	tag := "hs4:t"
+	assert.Equal(t, dtos.MetricsDashboardPanel{Title: "t", ChartType: "line", Select: []dtos.MetricsDashboardSelector{{Tag: &tag}}}, req.Panel)
 }
 
 func TestMetricsDashboardRequests_CheckTheFieldsSent(t *testing.T) {
@@ -111,8 +111,9 @@ func TestMetricsDashboardRequests_CheckTheFieldsSent(t *testing.T) {
 			`{"apiVersion":"v3","dashboard":{"name":" "}}`,
 			`{"apiVersion":"v3","dashboard":{"name":"d","range":{"last":"7d"}}}`,
 			`{"apiVersion":"v3","dashboard":{"name":"d","range":{"end":1000}}}`,
-			`{"apiVersion":"v3","dashboard":{"name":"d","panels":[{"title":"t","chartType":"line","tags":[]}]}}`,
-			`{"apiVersion":"v3","dashboard":{"name":"d","panels":[{"id":"p","title":"a","chartType":"line","tags":["hs4:t"]},{"id":"p","title":"b","chartType":"line","tags":["hs4:t"]}]}}`,
+			`{"apiVersion":"v3","dashboard":{"name":"d","panels":[{"title":"t","chartType":"line","select":[]}]}}`,
+			`{"apiVersion":"v3","dashboard":{"name":"d","panels":[{"title":"t","chartType":"line","tags":["hs4:t"]}]}}`,
+			`{"apiVersion":"v3","dashboard":{"name":"d","panels":[{"id":"p","title":"a","chartType":"line","select":[{"tag":"hs4:t"}]},{"id":"p","title":"b","chartType":"line","select":[{"tag":"hs4:t"}]}]}}`,
 		},
 		"update dashboard": {
 			`{"apiVersion":"v3","name":""}`,
@@ -122,28 +123,43 @@ func TestMetricsDashboardRequests_CheckTheFieldsSent(t *testing.T) {
 			`{"apiVersion":"v3","range":{"start":2000,"end":1000}}`,
 		},
 		"add panel": {
-			`{"apiVersion":"v3","panel":{"chartType":"line","tags":["hs4:t"]}}`,
-			`{"apiVersion":"v3","panel":{"title":"t","tags":["hs4:t"]}}`,
+			`{"apiVersion":"v3","panel":{"chartType":"line","select":[{"tag":"hs4:t"}]}}`,
+			`{"apiVersion":"v3","panel":{"title":"t","select":[{"tag":"hs4:t"}]}}`,
 			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line"}}`,
-			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","tags":["no-colon"]}}`,
-			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","tags":["hs4:t"],"layout":{"x":10,"y":0,"w":6,"h":4}}}`,
+			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","select":[{"tag":"no-colon"}]}}`,
+			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","select":[{"deviceName":"d"}]}}`,
+			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","select":[{"deviceName":"d","profileName":"p","tag":"hs4:t"}]}}`,
+			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","select":[{"deviceName":"","tag":"hs4:t"}]}}`,
+			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","select":[{"profileName":" ","resourceName":"r"}]}}`,
+			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","select":[{"resourceName":""}]}}`,
+			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","select":[{"tag":"hs4:t"}],"layout":{"x":10,"y":0,"w":6,"h":4}}}`,
 		},
 		"update panel": {
 			`{"apiVersion":"v3","title":" "}`,
 			`{"apiVersion":"v3","chartType":""}`,
-			`{"apiVersion":"v3","tags":[]}`,
-			`{"apiVersion":"v3","tags":["hs4:"]}`,
+			`{"apiVersion":"v3","select":[]}`,
+			`{"apiVersion":"v3","select":[{"tag":"hs4:"}]}`,
+			`{"apiVersion":"v3","select":[{"deviceName":"","tag":"hs4:t"}]}`,
+			`{"apiVersion":"v3","select":[{"profileName":"p"}]}`,
+			`{"apiVersion":"v3","select":[{"deviceName":"d","profileName":"p","resourceName":"r"}]}`,
 			`{"apiVersion":"v3","layout":{"x":-1,"y":0,"w":6,"h":4}}`,
 		},
 	}
 	accepted := map[string][]string{
 		"add dashboard": {
 			`{"apiVersion":"v3","dashboard":{"name":"d"}}`,
-			`{"apiVersion":"v3","dashboard":{"name":"d","range":{"start":1000,"end":2000},"panels":[{"title":"t","chartType":"line","tags":["hs4:t"]}]}}`,
+			`{"apiVersion":"v3","dashboard":{"name":"d","range":{"start":1000,"end":2000},"panels":[{"title":"t","chartType":"line","select":[{"tag":"hs4:t"},{"profileName":"Johnson-BMS","resourceName":"Lobby IAQ Sensor"}]}]}}`,
+		},
+		"add panel": {
+			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","select":[{"deviceName":"J","resourceName":"Lobby IAQ Sensor"}]}}`,
+			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","select":[{"resourceName":"Lobby IAQ Sensor","tag":"hs4:co2"}]}}`,
+			`{"apiVersion":"v3","panel":{"title":"t","chartType":"line","select":[{"tag":"hs4:co2"},{"tag":"hs4:co2"}]}}`,
 		},
 		"update panel": {
 			`{"apiVersion":"v3","layout":{"x":0,"y":0,"w":0,"h":0}}`,
-			`{"apiVersion":"v3","tags":["hs4:t","hs4:t"]}`,
+			`{"apiVersion":"v3","select":[{"tag":"hs4:t"},{"tag":"hs4:t"}]}`,
+			`{"apiVersion":"v3","select":[{"deviceName":"d","tag":"hs4:t"}]}`,
+			`{"apiVersion":"v3","select":[{"profileName":"p","resourceName":"r"}]}`,
 		},
 	}
 	targets := map[string]func() json.Unmarshaler{
@@ -173,8 +189,35 @@ func TestAddMetricsDashboardRequest_LeavesTheDashboardAsSent(t *testing.T) {
 	assert.Nil(t, req.Dashboard.Panels)
 }
 
-func TestUpdateMetricsDashboardPanelRequest_DedupesTags(t *testing.T) {
+func TestUpdateMetricsDashboardPanelRequest_SelectTexts(t *testing.T) {
+	tests := map[string]string{
+		`{"apiVersion":"v3","select":[]}`:                                                        "at least one selector is required",
+		`{"apiVersion":"v3","select":[{"tag":"hs4:t"},{"deviceName":"","tag":"hs4:t"}]}`:         "selector 2 has a blank deviceName",
+		`{"apiVersion":"v3","select":[{"profileName":"p"}]}`:                                     "selector 1 needs a resourceName or a tag",
+		`{"apiVersion":"v3","select":[{"deviceName":"d","profileName":"p","resourceName":"r"}]}`: "selector 1 sets both deviceName and profileName",
+		`{"apiVersion":"v3","select":[{"tag":"x"}]}`:                                             `selector 1: tag "x" is not <key>:<value>`,
+	}
+	for body, want := range tests {
+		err := json.Unmarshal([]byte(body), &UpdateMetricsDashboardPanelRequest{})
+		require.Error(t, err, body)
+		assert.Equal(t, errors.KindContractInvalid, errors.Kind(err), body)
+		assert.Equal(t, want, err.Error(), body)
+	}
+}
+
+func TestUpdateMetricsDashboardPanelRequest_KeepsSelectAsSent(t *testing.T) {
 	var req UpdateMetricsDashboardPanelRequest
-	require.NoError(t, json.Unmarshal([]byte(`{"apiVersion":"v3","tags":["hs4:t","hs4:u","hs4:t"]}`), &req))
-	assert.Equal(t, []string{"hs4:t", "hs4:u"}, *req.Tags)
+	body := `{"apiVersion":"v3","select":[{"deviceName":"b","tag":"hs4:t"},{"resourceName":"r"},{"deviceName":"b","tag":"hs4:t"}]}`
+	require.NoError(t, json.Unmarshal([]byte(body), &req))
+	require.NotNil(t, req.Select)
+	b, tag, r := "b", "hs4:t", "r"
+	assert.Equal(t, []dtos.MetricsDashboardSelector{
+		{DeviceName: &b, Tag: &tag}, {ResourceName: &r}, {DeviceName: &b, Tag: &tag},
+	}, *req.Select)
+	assert.Nil(t, req.Title)
+
+	out, err := json.Marshal(UpdateMetricsDashboardPanelRequest{Select: req.Select})
+	require.NoError(t, err)
+	assert.Contains(t, string(out), `"select":[{"deviceName":"b","tag":"hs4:t"},{"resourceName":"r"},{"deviceName":"b","tag":"hs4:t"}]`)
+	assert.NotContains(t, string(out), `"title"`)
 }
