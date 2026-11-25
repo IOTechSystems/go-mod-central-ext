@@ -1,8 +1,9 @@
-// Copyright (C) 2022-2024 IOTech Ltd
+// Copyright (C) 2022-2026 IOTech Ltd
 
 package xrtmodels
 
 import (
+	"encoding/json"
 	"math"
 	"reflect"
 	"testing"
@@ -152,12 +153,12 @@ func TestParseXRTReadingValue_64BitIntegers(t *testing.T) {
 	}
 }
 
-// Each 64-bit type takes only its own Go integer type, besides float64.
-func TestParseXRTReadingValue_64BitIntegersRejected(t *testing.T) {
+func TestParseXRTReadingValue_Rejected(t *testing.T) {
 	for _, tc := range []struct {
 		valueType string
 		reading   any
 	}{
+		// Each 64-bit type takes only its own Go integer type, besides float64.
 		{edgexCommon.ValueTypeInt64, uint64(1)},
 		{edgexCommon.ValueTypeUint64, int64(1)},
 		{edgexCommon.ValueTypeInt64, "1"},
@@ -170,6 +171,29 @@ func TestParseXRTReadingValue_64BitIntegersRejected(t *testing.T) {
 		{edgexCommon.ValueTypeUint64, float64(-1)},
 		{edgexCommon.ValueTypeUint64, float64(1 << 64)},
 		{edgexCommon.ValueTypeUint64Array, []any{float64(-1)}},
+		// A json.Number beyond its type's range, or for a type that is no number.
+		{edgexCommon.ValueTypeUint8, json.Number("256")},
+		{edgexCommon.ValueTypeUint8Array, []any{json.Number("256")}},
+		{edgexCommon.ValueTypeInt8, json.Number("-129")},
+		{edgexCommon.ValueTypeInt32, json.Number("2147483648")},
+		{edgexCommon.ValueTypeInt64, json.Number("9223372036854775808")},
+		{edgexCommon.ValueTypeInt64Array, []any{json.Number("9223372036854775808")}},
+		{edgexCommon.ValueTypeInt64, json.Number("-9223372036854775809")}, // rounds to MinInt64 as a float64
+		{edgexCommon.ValueTypeInt64Array, []any{json.Number("-9223372036854775809")}},
+		{edgexCommon.ValueTypeUint64, json.Number("-1")},
+		{edgexCommon.ValueTypeUint64Array, []any{json.Number("-1")}},
+		{edgexCommon.ValueTypeUint64, json.Number("18446744073709551616")},
+		{edgexCommon.ValueTypeInt64, json.Number("1e400")},
+		{edgexCommon.ValueTypeFloat64, json.Number("1e400")},
+		{edgexCommon.ValueTypeFloat64Array, []any{json.Number("1e400")}},
+		{edgexCommon.ValueTypeFloat32, float64(1e39)},
+		{edgexCommon.ValueTypeFloat32Array, []any{json.Number("-1e39")}},
+		// A number for a Uint8Array, whose digits would decode as base64.
+		{edgexCommon.ValueTypeUint8Array, json.Number("12345678")},
+		{edgexCommon.ValueTypeUint8Array, float64(1234)},
+		{edgexCommon.ValueTypeInt64, json.Number("")}, // not from a decoder, but must not panic
+		{edgexCommon.ValueTypeString, json.Number("1")},
+		{edgexCommon.ValueTypeBool, json.Number("1")},
 	} {
 		_, err := ParseXRTReadingValue(tc.valueType, tc.reading)
 		assert.Error(t, err, "%s %#v", tc.valueType, tc.reading)
@@ -240,6 +264,45 @@ func TestParseXRTReadingValue_SmallIntegerFraction(t *testing.T) {
 	assert.Equal(t, uint8(0), got)
 }
 
+// Every numeric type takes a json.Number, as a device:put request decodes one (see PutResourceRequest.UnmarshalJSON).
+func TestParseXRTReadingValue_JSONNumber(t *testing.T) {
+	for _, tc := range []struct {
+		valueType string
+		number    json.Number
+		want      any
+	}{
+		{edgexCommon.ValueTypeUint8, "255", uint8(255)},
+		{edgexCommon.ValueTypeUint16, "65535", uint16(65535)},
+		{edgexCommon.ValueTypeUint32, "4294967295", uint32(4294967295)},
+		{edgexCommon.ValueTypeUint64, "18446744073709551615", uint64(math.MaxUint64)},
+		{edgexCommon.ValueTypeInt8, "-128", int8(-128)},
+		{edgexCommon.ValueTypeInt16, "-32768", int16(-32768)},
+		{edgexCommon.ValueTypeInt32, "-2147483648", int32(-2147483648)},
+		{edgexCommon.ValueTypeInt64, "-9223372036854775808", int64(math.MinInt64)},
+		{edgexCommon.ValueTypeInt64, "9223372036854775807", int64(math.MaxInt64)},
+		{edgexCommon.ValueTypeFloat32, "1.5", float32(1.5)},
+		{edgexCommon.ValueTypeFloat32, "3.4028234663852886e38", float32(math.MaxFloat32)},
+		{edgexCommon.ValueTypeFloat64, "1.5", 1.5},
+		// Exponent and fraction forms, as before as float64.
+		{edgexCommon.ValueTypeInt8, "1e2", int8(100)},
+		{edgexCommon.ValueTypeInt64, "9007199254740993e0", int64(1<<53 + 1)},
+		{edgexCommon.ValueTypeUint64, "1.8446744073709551615e19", uint64(math.MaxUint64)},
+		{edgexCommon.ValueTypeUint8, "255.9", uint8(255)},
+		{edgexCommon.ValueTypeInt64, "-1.5", int64(-1)},
+		{edgexCommon.ValueTypeUint64, "-0.5", uint64(0)},
+	} {
+		t.Run(tc.valueType+" "+tc.number.String(), func(t *testing.T) {
+			got, err := ParseXRTReadingValue(tc.valueType, tc.number)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+
+			got, err = ParseXRTReadingValue(tc.valueType+"Array", []any{tc.number})
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, reflect.ValueOf(got).Index(0).Interface())
+		})
+	}
+}
+
 // Every value type, valid and not; the 64-bit and smaller integer types have their own tests above.
 func TestParseXRTReadingValue_Types(t *testing.T) {
 	object := map[string]any{"a": float64(1)}
@@ -276,7 +339,12 @@ func TestParseXRTReadingValue_Types(t *testing.T) {
 		{"Float64Array", edgexCommon.ValueTypeFloat64Array, []any{1.5}, []float64{1.5}, ""},
 		{"Float64Array invalid element", edgexCommon.ValueTypeFloat64Array, []any{nil}, nil, "invalid number '<nil>'"},
 		{"Object", edgexCommon.ValueTypeObject, object, object, ""},
-		{"ObjectArray", edgexCommon.ValueTypeObjectArray, []any{object}, []any{object}, ""},
+		// As a device:put decodes it (see PutResourceRequest.UnmarshalJSON).
+		{"Object number", edgexCommon.ValueTypeObject, json.Number("3"), float64(3), ""},
+		{"Object array", edgexCommon.ValueTypeObject, []any{json.Number("1"), "x"}, []any{float64(1), "x"}, ""},
+		{"ObjectArray", edgexCommon.ValueTypeObjectArray, []any{object}, []map[string]any{object}, ""},
+		{"ObjectArray with null", edgexCommon.ValueTypeObjectArray, []any{object, nil}, []map[string]any{object, nil}, ""},
+		{"ObjectArray invalid element", edgexCommon.ValueTypeObjectArray, []any{object, 1.5}, nil, "invalid object '1.5'"},
 		{"ObjectArray not an array", edgexCommon.ValueTypeObjectArray, object, nil, "invalid array 'map[a:1]'"},
 		{"unsupported type", "Bogus", 1.5, nil, "none supported value type 'Bogus'"},
 	} {

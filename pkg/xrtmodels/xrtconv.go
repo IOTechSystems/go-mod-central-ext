@@ -1,9 +1,10 @@
-// Copyright (C) 2022-2025 IOTech Ltd
+// Copyright (C) 2022-2026 IOTech Ltd
 
 package xrtmodels
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"math"
 	"strconv"
@@ -141,33 +142,56 @@ func ToEdgeXV2EventDTO(xrtEvent MultiResourcesResult) (edgexDtos.Event, errors.E
 	return event, nil
 }
 
-// toInt64 accepts an int64, as Reading.UnmarshalJSON decodes an Int64 value, or a float64, as a JSON number decodes
-// into any, within int64's range; the conversion would silently wrap one beyond it.
+// toInt64 accepts an int64, json.Number or float64 (see ParseXRTReadingValue) within int64's range; the conversion
+// would silently wrap one beyond it.
 func toInt64(v any) (int64, bool) {
 	switch n := v.(type) {
 	case float64:
 		return int64(n), n >= -(1<<63) && n < 1<<63
 	case int64:
 		return n, true
+	case json.Number:
+		return toInt64(exactNumber(n, false))
 	}
 	return 0, false
 }
 
-// toUint64 accepts a uint64 or a float64 within uint64's range (see toInt64).
+// toUint64 accepts a uint64, a json.Number or a float64 within uint64's range (see toInt64).
 func toUint64(v any) (uint64, bool) {
 	switch n := v.(type) {
 	case float64:
 		return uint64(n), n > -1 && n < 1<<64
 	case uint64:
 		return n, true
+	case json.Number:
+		return toUint64(exactNumber(n, true))
 	}
 	return 0, false
 }
 
-// toInteger accepts a float64 within T's range (see toInt64), checked by converting back, which is exact for T up to
-// 32 bits but not beyond: 2^64 could convert to MaxUint64 and back to 2^64.
+// exactNumber converts n to an int64 or uint64, or a non-integer to its float64, or to nil where that fails. Unlike
+// Reading.UnmarshalJSON, it fails for an integer beyond the range, which as a float64 could round into it (-2^63-1
+// becomes -2^63); a device:put value comes from a user, not from a 64-bit integer in XRT.
+func exactNumber(n json.Number, unsigned bool) any {
+	f, err := n.Float64()
+	if err != nil {
+		return nil // also keeps a string that is no number, such as "", from integerDigits
+	}
+	digits, ok := integerDigits(n.String())
+	if !ok {
+		return f
+	}
+	v, err := parseInteger(digits, unsigned)
+	if err != nil {
+		return nil
+	}
+	return v
+}
+
+// toInteger accepts a float64 or json.Number within T's range (see toInt64), checked by converting back, which is
+// exact for T up to 32 bits but not beyond: 2^64 could convert to MaxUint64 and back to 2^64.
 func toInteger[T int8 | int16 | int32 | uint8 | uint16 | uint32](v any) (T, bool) {
-	f, ok := v.(float64)
+	f, ok := toFloat64(v)
 	if !ok {
 		return 0, false
 	}
@@ -178,7 +202,8 @@ func toInteger[T int8 | int16 | int32 | uint8 | uint16 | uint32](v any) (T, bool
 // ParseXRTReadingValue parses the XRT reading value to EdgeX reading value.
 func ParseXRTReadingValue(valueType string, reading interface{}) (interface{}, errors.EdgeX) {
 	// The reading is as JSON decodes into any: bool, float64, nil, string, []interface{} or map[string]interface{};
-	// an Int64 or Uint64 value, or an element of their arrays, may also be int64 or uint64 (see Reading.UnmarshalJSON).
+	// an Int64 or Uint64 value, or an element of their arrays, may also be int64 or uint64 (see Reading.UnmarshalJSON),
+	// and any number, or an element of an array, a json.Number (see PutResourceRequest.UnmarshalJSON).
 	switch valueType {
 	case edgexCommon.ValueTypeString:
 		return parseValue(reading, assertType[string], invalidString)
@@ -203,7 +228,7 @@ func ParseXRTReadingValue(valueType string, reading interface{}) (interface{}, e
 	case edgexCommon.ValueTypeFloat32:
 		return parseValue(reading, toFloat32, invalidNumber)
 	case edgexCommon.ValueTypeFloat64:
-		return parseValue(reading, assertType[float64], invalidNumber)
+		return parseValue(reading, toFloat64, invalidNumber)
 	case edgexCommon.ValueTypeBinary:
 		return parseBinary(reading)
 	case edgexCommon.ValueTypeBoolArray:
@@ -232,14 +257,11 @@ func ParseXRTReadingValue(valueType string, reading interface{}) (interface{}, e
 	case edgexCommon.ValueTypeFloat32Array:
 		return parseArray(reading, toFloat32, invalidNumber)
 	case edgexCommon.ValueTypeFloat64Array:
-		return parseArray(reading, assertType[float64], invalidNumber)
+		return parseArray(reading, toFloat64, invalidNumber)
 	case edgexCommon.ValueTypeObject:
-		return reading, nil
+		return objectValue(reading), nil
 	case edgexCommon.ValueTypeObjectArray:
-		if _, ok := reading.([]interface{}); !ok {
-			return nil, invalidArray(reading)
-		}
-		return reading, nil
+		return parseArray(reading, toObject, invalidObject)
 	}
 	return nil, errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("none supported value type '%s'", valueType), nil)
 }
@@ -249,6 +271,7 @@ const (
 	invalidString = "invalid string value '%v'"
 	invalidBool   = "invalid bool value '%v'"
 	invalidNumber = "invalid number '%v'"
+	invalidObject = "invalid object '%v'"
 )
 
 func assertType[T any](v any) (T, bool) {
@@ -256,9 +279,45 @@ func assertType[T any](v any) (T, bool) {
 	return t, ok
 }
 
+// toObject accepts an object, or null as a nil map, as NewCommandValue requires of an ObjectArray element.
+func toObject(v any) (map[string]any, bool) {
+	m, ok := v.(map[string]any)
+	return m, ok || v == nil
+}
+
+// objectValue returns an Object reading as is, but for each json.Number that PutResourceRequest.UnmarshalJSON kept in
+// it, at the top or in an array, which becomes the float64 it held before; one nested in an object is float64 already.
+func objectValue(v any) any {
+	switch value := v.(type) {
+	case json.Number:
+		if f, err := value.Float64(); err == nil {
+			return f
+		}
+	case []any:
+		array := make([]any, len(value))
+		for i, elem := range value {
+			array[i] = objectValue(elem)
+		}
+		return array
+	}
+	return v
+}
+
+// toFloat32 rejects a number beyond float32's range, which would convert to ±Inf.
 func toFloat32(v any) (float32, bool) {
-	f, ok := v.(float64)
-	return float32(f), ok
+	f, ok := toFloat64(v)
+	return float32(f), ok && !math.IsInf(float64(float32(f)), 0)
+}
+
+func toFloat64(v any) (float64, bool) {
+	switch n := v.(type) {
+	case float64:
+		return n, true
+	case json.Number:
+		f, err := n.Float64()
+		return f, err == nil
+	}
+	return 0, false
 }
 
 func parseValue[T any](reading any, convert func(any) (T, bool), format string) (any, errors.EdgeX) {
@@ -300,9 +359,14 @@ func parseBinary(reading any) (any, errors.EdgeX) {
 	return data, nil
 }
 
-// parseBase64Uint8Array decodes a Uint8Array reading that is not an array, as base64.
+// parseBase64Uint8Array decodes a Uint8Array reading that is not an array, as a base64 string; a number such as 1234
+// would decode as base64 digits too.
 func parseBase64Uint8Array(reading any) (any, errors.EdgeX) {
-	data, err := base64.StdEncoding.DecodeString(fmt.Sprint(reading))
+	s, ok := reading.(string)
+	if !ok {
+		return nil, invalidArray(reading)
+	}
+	data, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		return nil, invalidArray(reading)
 	}

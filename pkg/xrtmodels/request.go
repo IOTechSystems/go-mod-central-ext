@@ -3,6 +3,9 @@
 package xrtmodels
 
 import (
+	"bytes"
+	"encoding/json"
+
 	edgexDtos "github.com/edgexfoundry/go-mod-core-contracts/v4/dtos"
 
 	"github.com/google/uuid"
@@ -117,6 +120,42 @@ type PutResourceRequest struct {
 	DeviceName  string                 `json:"device"`
 	Values      map[string]interface{} `json:"values"`
 	Options     map[string]interface{} `json:"options"`
+}
+
+// UnmarshalJSON keeps each number in Values, or an element of an array value, as a json.Number, which
+// ParseXRTReadingValue converts exactly for the resource's value type; the request carries no type to decode it by
+// (see Reading.UnmarshalJSON). A number nested deeper, as in an Object value, decodes as float64 as before.
+func (r *PutResourceRequest) UnmarshalJSON(data []byte) error {
+	type plain PutResourceRequest // without this method
+	if err := json.Unmarshal(data, (*plain)(r)); err != nil {
+		return err
+	}
+	var numbers struct {
+		Values map[string]any `json:"values"`
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	if err := decoder.Decode(&numbers); err != nil {
+		return err
+	}
+	for name, value := range numbers.Values {
+		switch v := value.(type) {
+		case json.Number:
+			r.Values[name] = v
+		case []any:
+			keepNumbers(r.Values[name].([]any), v)
+		}
+	}
+	return nil
+}
+
+// keepNumbers replaces each element of array that is a json.Number in numbers, the same array decoded with UseNumber.
+func keepNumbers(array, numbers []any) {
+	for i, elem := range numbers {
+		if n, ok := elem.(json.Number); ok {
+			array[i] = n
+		}
+	}
 }
 
 type ScheduleRequest struct {

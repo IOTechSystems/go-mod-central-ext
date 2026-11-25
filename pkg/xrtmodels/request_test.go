@@ -361,3 +361,40 @@ func TestBatchScheduleResultsDecodesTheMeasuredReply(t *testing.T) {
 		t.Errorf("[1]: got %+v, want nope/1", response.Result.Results[1])
 	}
 }
+
+func TestPutResourceRequest_UnmarshalJSON(t *testing.T) {
+	var req PutResourceRequest
+	err := json.Unmarshal([]byte(`{"client":"c","request_id":"1","op":"device:put","device":"d","values":{
+		"int":9007199254740993,"ints":[18446744073709551615,"x",{"n":1},[1]],"str":"s","bool":true,"obj":{"n":1}},
+		"options":{"n":1}}`), &req)
+
+	require.NoError(t, err)
+	assert.Equal(t, BaseRequest{Client: "c", RequestId: "1", Op: DeviceResourceSetOperation}, req.BaseRequest)
+	assert.Equal(t, "d", req.DeviceName)
+	assert.Equal(t, map[string]any{
+		"int":  json.Number("9007199254740993"),
+		"ints": []any{json.Number("18446744073709551615"), "x", map[string]any{"n": float64(1)}, []any{float64(1)}},
+		"str":  "s",
+		"bool": true,
+		"obj":  map[string]any{"n": float64(1)},
+	}, req.Values)
+	assert.Equal(t, map[string]any{"n": float64(1)}, req.Options)
+}
+
+func TestPutResourceRequest_UnmarshalJSON_NoValues(t *testing.T) {
+	var req PutResourceRequest
+	require.NoError(t, json.Unmarshal([]byte(`{"device":"d","values":null}`), &req))
+	assert.Nil(t, req.Values)
+}
+
+func TestPutResourceRequest_UnmarshalJSON_Invalid(t *testing.T) {
+	for _, data := range []string{
+		`{"device":"d","values":{"n":1}`,
+		// Beyond float64's range, as it failed before numbers decoded as json.Number.
+		`{"device":"d","values":{"n":1e400}}`,
+		`{"device":"d","values":{"a":[1,1e400]}}`,
+	} {
+		var req PutResourceRequest
+		assert.Error(t, json.Unmarshal([]byte(data), &req), data)
+	}
+}
