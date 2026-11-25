@@ -7,6 +7,7 @@ import (
 	"math"
 	"testing"
 
+	edgexCommon "github.com/edgexfoundry/go-mod-core-contracts/v4/common"
 	"github.com/edgexfoundry/go-mod-core-contracts/v4/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -149,12 +150,14 @@ func TestReading_UnmarshalJSON_Invalid(t *testing.T) {
 	}
 }
 
-// An XRT reply decoded through MultiResourcesResponse reaches the EdgeX event exactly.
+// An XRT reply decoded through MultiResourcesResponse reaches the EdgeX event exactly, and an ObjectArray encodes
+// as it did when it was []any.
 func TestToEdgeXV2EventDTO_FromJSON(t *testing.T) {
 	var res MultiResourcesResponse
 	require.NoError(t, json.Unmarshal([]byte(`{"result": {"device": "d", "profile": "p", "readings": {
 		"count": {"value": 18446744073709551615, "type": "Uint64"},
-		"offset": {"value": 9223372036854775807, "type": "Int64"}}}}`), &res))
+		"offset": {"value": 9223372036854775807, "type": "Int64"},
+		"objs": {"value": [{"a": 1, "b": "x"}, {}, null], "type": "ObjectArray"}}}}`), &res))
 
 	event, err := ToEdgeXV2EventDTO(res.Result)
 
@@ -162,6 +165,12 @@ func TestToEdgeXV2EventDTO_FromJSON(t *testing.T) {
 	values := map[string]string{}
 	for _, reading := range event.Readings {
 		values[reading.ResourceName] = reading.Value
+		if reading.ValueType == edgexCommon.ValueTypeObjectArray {
+			encoded, jsonErr := json.Marshal(reading.ObjectValue)
+			require.NoError(t, jsonErr)
+			values[reading.ResourceName] = string(encoded)
+		}
 	}
-	assert.Equal(t, map[string]string{"count": "18446744073709551615", "offset": "9223372036854775807"}, values)
+	assert.Equal(t, map[string]string{"count": "18446744073709551615", "offset": "9223372036854775807",
+		"objs": `[{"a":1,"b":"x"},{},null]`}, values)
 }
