@@ -72,16 +72,49 @@ func TestUpdateMetricsDashboardPanelRequest_NeedsAChange(t *testing.T) {
 	err := json.Unmarshal([]byte(`{"apiVersion":"v3"}`), &req)
 	require.Error(t, err)
 	assert.Equal(t, errors.KindContractInvalid, errors.Kind(err))
-	assert.Equal(t, "the update sets none of title, chartType, select and layout", err.Error())
+	assert.Equal(t, "the update sets none of title, chartType, select, layout, valueMapping and rightAxisUnits", err.Error())
 
 	for _, body := range []string{
 		`{"apiVersion":"v3","title":"t"}`,
 		`{"apiVersion":"v3","chartType":"bar"}`,
 		`{"apiVersion":"v3","select":[{"tag":"hs4:t"}]}`,
 		`{"apiVersion":"v3","layout":{"x":0,"y":0,"w":6,"h":4}}`,
+		`{"apiVersion":"v3","valueMapping":{"Run Status":{"0":"Stopped","":"Empty","1":""}," ":{}}}`,
+		`{"apiVersion":"v3","rightAxisUnits":["%",""," ","%"]}`,
+		`{"apiVersion":"v3","valueMapping":{}}`,
+		`{"apiVersion":"v3","rightAxisUnits":[]}`,
 	} {
 		assert.NoError(t, json.Unmarshal([]byte(body), &UpdateMetricsDashboardPanelRequest{}), body)
 	}
+}
+
+func TestUpdateMetricsDashboardPanelRequest_SetsAndClears(t *testing.T) {
+	var set UpdateMetricsDashboardPanelRequest
+	require.NoError(t, json.Unmarshal([]byte(`{"apiVersion":"v3","valueMapping":{"Run Status":{"0":"Stopped"}},"rightAxisUnits":["%"]}`), &set))
+	require.NotNil(t, set.ValueMapping)
+	require.NotNil(t, set.RightAxisUnits)
+	assert.Equal(t, map[string]map[string]string{"Run Status": {"0": "Stopped"}}, *set.ValueMapping)
+	assert.Equal(t, []string{"%"}, *set.RightAxisUnits)
+
+	var cleared UpdateMetricsDashboardPanelRequest
+	require.NoError(t, json.Unmarshal([]byte(`{"apiVersion":"v3","valueMapping":{},"rightAxisUnits":[]}`), &cleared))
+	require.NotNil(t, cleared.ValueMapping, "{} clears, it is not absent")
+	require.NotNil(t, cleared.RightAxisUnits, "[] clears, it is not absent")
+	assert.Empty(t, *cleared.ValueMapping)
+	assert.Empty(t, *cleared.RightAxisUnits)
+	out, err := json.Marshal(cleared)
+	require.NoError(t, err)
+	assert.Contains(t, string(out), `"valueMapping":{}`)
+	assert.Contains(t, string(out), `"rightAxisUnits":[]`)
+
+	var untouched UpdateMetricsDashboardPanelRequest
+	require.NoError(t, json.Unmarshal([]byte(`{"apiVersion":"v3","title":"t"}`), &untouched))
+	assert.Nil(t, untouched.ValueMapping)
+	assert.Nil(t, untouched.RightAxisUnits)
+	out, err = json.Marshal(untouched)
+	require.NoError(t, err)
+	assert.NotContains(t, string(out), `"valueMapping"`)
+	assert.NotContains(t, string(out), `"rightAxisUnits"`)
 }
 
 func TestUpdateMetricsDashboardPanelRequest_OldFieldsAreNoChange(t *testing.T) {
@@ -92,7 +125,7 @@ func TestUpdateMetricsDashboardPanelRequest_OldFieldsAreNoChange(t *testing.T) {
 	} {
 		err := json.Unmarshal([]byte(body), &UpdateMetricsDashboardPanelRequest{})
 		require.Error(t, err, body)
-		assert.Equal(t, "the update sets none of title, chartType, select and layout", err.Error(), body)
+		assert.Equal(t, "the update sets none of title, chartType, select, layout, valueMapping and rightAxisUnits", err.Error(), body)
 	}
 }
 

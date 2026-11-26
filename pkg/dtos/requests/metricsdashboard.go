@@ -121,13 +121,16 @@ func (a *AddMetricsDashboardPanelRequest) UnmarshalJSON(b []byte) error {
 }
 
 // UpdateMetricsDashboardPanelRequest defines the Request Content for PATCH MetricsDashboardPanel; only the fields set are
-// changed, and a set Select replaces the panel's whole list. Validate checks each field set on its own.
+// changed, and a set Select replaces the panel's whole list. Validate checks each field set on its own. A set
+// ValueMapping or RightAxisUnits replaces the panel's whole value, {} and [] clearing it; neither is checked.
 type UpdateMetricsDashboardPanelRequest struct {
 	dtoCommon.BaseRequest `json:",inline"`
 	Title                 *string                          `json:"title,omitempty"`
 	ChartType             *string                          `json:"chartType,omitempty"`
 	Select                *[]dtos.MetricsDashboardSelector `json:"select,omitempty"`
 	Layout                *dtos.MetricsDashboardLayout     `json:"layout,omitempty"`
+	ValueMapping          *map[string]map[string]string    `json:"valueMapping,omitempty"`
+	RightAxisUnits        *[]string                        `json:"rightAxisUnits,omitempty"`
 }
 
 // Validate satisfies the Validator interface
@@ -135,8 +138,9 @@ func (u *UpdateMetricsDashboardPanelRequest) Validate() error {
 	if err := edgexCommon.Validate(u); err != nil {
 		return err
 	}
-	if u.Title == nil && u.ChartType == nil && u.Select == nil && u.Layout == nil {
-		return errors.NewCommonEdgeX(errors.KindContractInvalid, "the update sets none of title, chartType, select and layout", nil)
+	if u.Title == nil && u.ChartType == nil && u.Select == nil && u.Layout == nil && u.ValueMapping == nil && u.RightAxisUnits == nil {
+		return errors.NewCommonEdgeX(errors.KindContractInvalid,
+			"the update sets none of title, chartType, select, layout, valueMapping and rightAxisUnits", nil)
 	}
 	if u.Title != nil && strings.TrimSpace(*u.Title) == "" {
 		return errors.NewCommonEdgeX(errors.KindContractInvalid, "panel title is required", nil)
@@ -159,10 +163,12 @@ func (u *UpdateMetricsDashboardPanelRequest) Validate() error {
 func (u *UpdateMetricsDashboardPanelRequest) UnmarshalJSON(b []byte) error {
 	var alias struct {
 		dtoCommon.BaseRequest
-		Title     *string
-		ChartType *string
-		Select    *[]dtos.MetricsDashboardSelector
-		Layout    *dtos.MetricsDashboardLayout
+		Title          *string
+		ChartType      *string
+		Select         *[]dtos.MetricsDashboardSelector
+		Layout         *dtos.MetricsDashboardLayout
+		ValueMapping   *map[string]map[string]string
+		RightAxisUnits *[]string
 	}
 	if err := json.Unmarshal(b, &alias); err != nil {
 		return errors.NewCommonEdgeX(errors.KindContractInvalid, "Failed to unmarshal request body as JSON.", err)
