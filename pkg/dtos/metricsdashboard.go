@@ -33,13 +33,21 @@ type MetricsDashboardRange struct {
 	End   int64  `json:"end,omitempty"`
 }
 
-// MetricsDashboardPanel charts the union of what its selectors select
+// MetricsDashboardPanel charts the union of what its selectors select. ValueMapping and RightAxisUnits are kept on
+// every chart type, and each is drawn only by the chart types its comment names, so switching chartType back draws
+// them again.
 type MetricsDashboardPanel struct {
 	Id        string                     `json:"id,omitempty"`
 	Title     string                     `json:"title"`
 	ChartType string                     `json:"chartType"`
 	Select    []MetricsDashboardSelector `json:"select"`
 	Layout    MetricsDashboardLayout     `json:"layout"`
+	// ValueMapping names raw values, as {<resourceName>: {<raw value as string>: <name>}}, shared by every device's
+	// resource of that name; a stat shows the name in place of the value. An empty name shows the raw value.
+	ValueMapping map[string]map[string]string `json:"valueMapping,omitempty"`
+	// RightAxisUnits lists the units a line or bar chart draws on its right y axis, everything else on the left;
+	// without it, the chart splits its series by units on its own.
+	RightAxisUnits []string `json:"rightAxisUnits,omitempty"`
 }
 
 // MetricsDashboardSelector is one entry of a panel's select; a panel charts every point its selectors pick.

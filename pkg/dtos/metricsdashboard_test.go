@@ -145,6 +145,14 @@ func TestMetricsDashboardValidate_Accepts(t *testing.T) {
 		{"panels without ids", func(d *MetricsDashboard) {
 			d.Panels = []MetricsDashboardPanel{validMetricsDashboardPanel(), validMetricsDashboardPanel()}
 		}},
+		{"valueMapping with blank entries on a gauge", func(d *MetricsDashboard) {
+			d.Panels[0].ChartType = "gauge"
+			d.Panels[0].ValueMapping = map[string]map[string]string{"Run Status": {"0": "Stopped", "": "Empty", "1": ""}, " ": {"x": "y"}}
+		}},
+		{"rightAxisUnits with blank and repeated units on a stat", func(d *MetricsDashboard) {
+			d.Panels[0].ChartType = "stat"
+			d.Panels[0].RightAxisUnits = []string{"%", "", " ", "%"}
+		}},
 	}
 	for _, c := range common.MetricsDashboardLastChoices {
 		tests = append(tests, struct {
@@ -311,6 +319,18 @@ func TestMetricsDashboardPanel_JSON(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(`{"title":"t","chartType":"line","select":[{"deviceName":"","tag":"hs4:t"}]}`), &p))
 	require.NotNil(t, p.Select[0].DeviceName, "an empty deviceName is sent, not absent")
 	assert.Error(t, p.Validate())
+
+	withFields := selectorsMetricsDashboardPanel()
+	withFields.ValueMapping = map[string]map[string]string{"Run Status": {"0": "Stopped", "1": "Running"}}
+	withFields.RightAxisUnits = []string{"%"}
+	b, err = json.Marshal(withFields)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"title":"Temps","chartType":"line","layout":{"x":0,"y":0,"w":0,"h":0},
+		"select":[{"tag":"hs4:co2"},{"profileName":"Johnson-BMS","resourceName":"Lobby IAQ Sensor"}],
+		"valueMapping":{"Run Status":{"0":"Stopped","1":"Running"}},"rightAxisUnits":["%"]}`, string(b))
+	var gotFields MetricsDashboardPanel
+	require.NoError(t, json.Unmarshal(b, &gotFields))
+	assert.Equal(t, withFields, gotFields)
 }
 
 func TestMetricsDashboardOverview_JSON(t *testing.T) {
