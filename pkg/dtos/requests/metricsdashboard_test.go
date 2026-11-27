@@ -83,6 +83,7 @@ func TestUpdateMetricsDashboardPanelRequest_NeedsAChange(t *testing.T) {
 		`{"apiVersion":"v3","rightAxisUnits":["%",""," ","%"]}`,
 		`{"apiVersion":"v3","valueMapping":{}}`,
 		`{"apiVersion":"v3","rightAxisUnits":[]}`,
+		`{"apiVersion":"v3","resourceLabels":{"Boiler-1":{"Temperature":"Boiler 1 water"}}}`,
 		`{"apiVersion":"v3","resourceLabels":{}}`,
 	} {
 		assert.NoError(t, json.Unmarshal([]byte(body), &UpdateMetricsDashboardPanelRequest{}), body)
@@ -254,4 +255,99 @@ func TestUpdateMetricsDashboardPanelRequest_KeepsSelectAsSent(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, string(out), `"select":[{"deviceName":"b","tag":"hs4:t"},{"resourceName":"r"},{"deviceName":"b","tag":"hs4:t"}]`)
 	assert.NotContains(t, string(out), `"title"`)
+}
+
+func TestUpdateMetricsDashboardPanelRequest_ResourceLabelsSetsAndClears(t *testing.T) {
+	var set UpdateMetricsDashboardPanelRequest
+	body := `{"apiVersion":"v3","resourceLabels":{"Boiler-1":{"Temperature":"Boiler 1 water"},"Boiler-2":{"Temperature":"Boiler 2 water"}}}`
+	require.NoError(t, json.Unmarshal([]byte(body), &set))
+	require.NotNil(t, set.ResourceLabels)
+	assert.Equal(t, map[string]map[string]string{
+		"Boiler-1": {"Temperature": "Boiler 1 water"},
+		"Boiler-2": {"Temperature": "Boiler 2 water"},
+	}, *set.ResourceLabels)
+
+	var cleared UpdateMetricsDashboardPanelRequest
+	require.NoError(t, json.Unmarshal([]byte(`{"apiVersion":"v3","resourceLabels":{}}`), &cleared))
+	require.NotNil(t, cleared.ResourceLabels, "{} clears, it is not absent")
+	assert.Empty(t, *cleared.ResourceLabels)
+	out, err := json.Marshal(cleared)
+	require.NoError(t, err)
+	assert.Contains(t, string(out), `"resourceLabels":{}`)
+
+	var untouched UpdateMetricsDashboardPanelRequest
+	require.NoError(t, json.Unmarshal([]byte(`{"apiVersion":"v3","title":"t"}`), &untouched))
+	assert.Nil(t, untouched.ResourceLabels)
+	out, err = json.Marshal(untouched)
+	require.NoError(t, err)
+	assert.NotContains(t, string(out), `"resourceLabels"`)
+}
+
+func TestUpdateMetricsDashboardPanelRequest_ResourceLabelsNotChecked(t *testing.T) {
+	var req UpdateMetricsDashboardPanelRequest
+	body := `{"apiVersion":"v3","resourceLabels":{"Unselected":{"Nothing":""}," ":{" ":" "},"Boiler-1":{}}}`
+	require.NoError(t, json.Unmarshal([]byte(body), &req))
+	require.NotNil(t, req.ResourceLabels)
+	assert.Equal(t, map[string]map[string]string{"Unselected": {"Nothing": ""}, " ": {" ": " "}, "Boiler-1": {}}, *req.ResourceLabels)
+}
+
+func TestUpdateMetricsDashboardLayoutRequest_IsAValidator(t *testing.T) {
+	_, ok := any(&UpdateMetricsDashboardLayoutRequest{}).(interface{ Validate() error })
+	assert.True(t, ok, "UpdateMetricsDashboardLayoutRequest needs Validate, as its siblings")
+	_, ok = any(&UpdateMetricsDashboardLayoutRequest{}).(json.Unmarshaler)
+	assert.True(t, ok, "UpdateMetricsDashboardLayoutRequest needs UnmarshalJSON, as its siblings")
+}
+
+func TestUpdateMetricsDashboardLayoutRequest_NeedsApiVersion(t *testing.T) {
+	err := json.Unmarshal([]byte(`{"layouts":{"a1":{"x":0,"y":0,"w":6,"h":4}}}`), &UpdateMetricsDashboardLayoutRequest{})
+	require.Error(t, err)
+	assert.Equal(t, errors.KindContractInvalid, errors.Kind(err))
+}
+
+func TestUpdateMetricsDashboardLayoutRequest_NeedsALayout(t *testing.T) {
+	for _, body := range []string{
+		`{"apiVersion":"v3","layouts":{}}`,
+		`{"apiVersion":"v3"}`,
+		`{"apiVersion":"v3","layouts":null}`,
+	} {
+		err := json.Unmarshal([]byte(body), &UpdateMetricsDashboardLayoutRequest{})
+		require.Error(t, err, body)
+		assert.Equal(t, errors.KindContractInvalid, errors.Kind(err), body)
+		assert.Equal(t, "the update sets no layout", err.Error(), body)
+	}
+}
+
+func TestUpdateMetricsDashboardLayoutRequest_RefusesALayoutOffTheGrid(t *testing.T) {
+	tests := []struct {
+		name   string
+		layout string
+		want   string
+	}{
+		{"past the right edge", `{"x":10,"y":0,"w":6,"h":4}`, "panel a1 -> layout {X:10 Y:0 W:6 H:4} is outside the 12-column grid"},
+		{"no width", `{"x":0,"y":0,"w":0,"h":4}`, "panel a1 -> layout {X:0 Y:0 W:0 H:4} is outside the 12-column grid"},
+		{"no height", `{"x":0,"y":0,"w":6,"h":0}`, "panel a1 -> layout {X:0 Y:0 W:6 H:0} is outside the 12-column grid"},
+		{"above the top", `{"x":0,"y":-1,"w":6,"h":4}`, "panel a1 -> layout {X:0 Y:-1 W:6 H:4} is outside the 12-column grid"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			body := `{"apiVersion":"v3","layouts":{"a1":` + tt.layout + `,"b7":{"x":0,"y":0,"w":6,"h":4}}}`
+			err := json.Unmarshal([]byte(body), &UpdateMetricsDashboardLayoutRequest{})
+			require.Error(t, err)
+			assert.Equal(t, errors.KindContractInvalid, errors.Kind(err))
+			assert.Equal(t, tt.want, err.Error())
+		})
+	}
+}
+
+func TestUpdateMetricsDashboardLayoutRequest_Accepts(t *testing.T) {
+	var req UpdateMetricsDashboardLayoutRequest
+	body := `{"apiVersion":"v3","layouts":{"a1":{"x":0,"y":0,"w":6,"h":4},"b7":{"x":6,"y":0,"w":6,"h":4},
+		"c3":{"x":0,"y":0,"w":0,"h":0},"d4":{"x":0,"y":0,"w":12,"h":2}}}`
+	require.NoError(t, json.Unmarshal([]byte(body), &req))
+	assert.Equal(t, map[string]dtos.MetricsDashboardLayout{
+		"a1": {X: 0, Y: 0, W: 6, H: 4},
+		"b7": {X: 6, Y: 0, W: 6, H: 4},
+		"c3": {},
+		"d4": {X: 0, Y: 0, W: 12, H: 2},
+	}, req.Layouts, "a zero layout and overlapping layouts are accepted")
 }

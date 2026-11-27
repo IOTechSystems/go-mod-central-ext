@@ -365,3 +365,38 @@ func TestMetricsDashboardResource_JSON(t *testing.T) {
 	assert.NotContains(t, string(b), `"units"`)
 	assert.NotContains(t, string(b), `"description"`)
 }
+
+func TestMetricsDashboardPanel_StoredWithoutResourceLabels(t *testing.T) {
+	stored := `{"id":"a1","title":"Temps","chartType":"line","layout":{"x":0,"y":0,"w":6,"h":4},
+		"select":[{"deviceName":"Boiler-1","resourceName":"Temperature"}],
+		"valueMapping":{"Run Status":{"0":"Stopped"}},"rightAxisUnits":["%"]}`
+	var p MetricsDashboardPanel
+	require.NoError(t, json.Unmarshal([]byte(stored), &p))
+	assert.Nil(t, p.ResourceLabels)
+	b, err := json.Marshal(p)
+	require.NoError(t, err)
+	assert.NotContains(t, string(b), "resourceLabels")
+	assert.JSONEq(t, stored, string(b))
+}
+
+func TestMetricsDashboardPanel_ResourceLabelsJSON(t *testing.T) {
+	p := validMetricsDashboardPanel()
+	p.ResourceLabels = map[string]map[string]string{
+		"Boiler-1": {"Temperature": "Boiler 1 water"},
+		"Boiler-2": {"Temperature": "Boiler 2 water"},
+	}
+	b, err := json.Marshal(p)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"title":"Temps","chartType":"line","layout":{"x":0,"y":0,"w":0,"h":0},
+		"select":[{"tag":"hs4:zone-air-temp"}],
+		"resourceLabels":{"Boiler-1":{"Temperature":"Boiler 1 water"},"Boiler-2":{"Temperature":"Boiler 2 water"}}}`, string(b))
+	var got MetricsDashboardPanel
+	require.NoError(t, json.Unmarshal(b, &got))
+	assert.Equal(t, p, got)
+}
+
+func TestMetricsDashboardPanel_ResourceLabelsNotChecked(t *testing.T) {
+	p := validMetricsDashboardPanel()
+	p.ResourceLabels = map[string]map[string]string{"Unselected": {"Nothing": ""}, " ": {" ": " "}}
+	assert.NoError(t, p.Validate())
+}
