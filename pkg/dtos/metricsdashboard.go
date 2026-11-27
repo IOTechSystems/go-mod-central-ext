@@ -48,6 +48,10 @@ type MetricsDashboardPanel struct {
 	// RightAxisUnits lists the units a line or bar chart draws on its right y axis, everything else on the left;
 	// without it, the chart splits its series by units on its own.
 	RightAxisUnits []string `json:"rightAxisUnits,omitempty"`
+	// ResourceLabels names series, as {<deviceName>: {<resourceName>: <name>}}; a series without a name shows
+	// <deviceName> / <resourceName>. Data Dashboard's field of the same name is keyed by resource only, since its
+	// panels hold one device. It is not checked: a name for a series the panel does not select matches nothing.
+	ResourceLabels map[string]map[string]string `json:"resourceLabels,omitempty"`
 }
 
 // MetricsDashboardSelector is one entry of a panel's select; a panel charts every point its selectors pick.

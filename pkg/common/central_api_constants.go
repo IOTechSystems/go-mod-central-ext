@@ -87,6 +87,7 @@ const (
 	ApiMetricsDashboardPath           = edgexCommon.ApiBase + "/metricsdashboard"
 	ApiMetricsDashboardAllRoute       = ApiMetricsDashboardPath + "/" + edgexCommon.All
 	ApiMetricsDashboardByIdRoute      = ApiMetricsDashboardPath + "/" + edgexCommon.Id + "/:" + edgexCommon.Id
+	ApiMetricsDashboardLayoutRoute    = ApiMetricsDashboardByIdRoute + "/layout"
 	ApiMetricsDashboardPanelRoute     = ApiMetricsDashboardByIdRoute + "/panel"
 	ApiMetricsDashboardPanelByIdRoute = ApiMetricsDashboardPanelRoute + "/" + edgexCommon.Id + "/:" + PanelId
 	ApiMetricsDashboardOverviewRoute  = ApiMetricsDashboardPath + "/overview"

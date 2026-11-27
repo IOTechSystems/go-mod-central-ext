@@ -72,7 +72,7 @@ func TestUpdateMetricsDashboardPanelRequest_NeedsAChange(t *testing.T) {
 	err := json.Unmarshal([]byte(`{"apiVersion":"v3"}`), &req)
 	require.Error(t, err)
 	assert.Equal(t, errors.KindContractInvalid, errors.Kind(err))
-	assert.Equal(t, "the update sets none of title, chartType, select, layout, valueMapping and rightAxisUnits", err.Error())
+	assert.Equal(t, "the update sets none of title, chartType, select, layout, valueMapping, rightAxisUnits and resourceLabels", err.Error())
 
 	for _, body := range []string{
 		`{"apiVersion":"v3","title":"t"}`,
@@ -83,6 +83,7 @@ func TestUpdateMetricsDashboardPanelRequest_NeedsAChange(t *testing.T) {
 		`{"apiVersion":"v3","rightAxisUnits":["%",""," ","%"]}`,
 		`{"apiVersion":"v3","valueMapping":{}}`,
 		`{"apiVersion":"v3","rightAxisUnits":[]}`,
+		`{"apiVersion":"v3","resourceLabels":{}}`,
 	} {
 		assert.NoError(t, json.Unmarshal([]byte(body), &UpdateMetricsDashboardPanelRequest{}), body)
 	}
@@ -125,7 +126,7 @@ func TestUpdateMetricsDashboardPanelRequest_OldFieldsAreNoChange(t *testing.T) {
 	} {
 		err := json.Unmarshal([]byte(body), &UpdateMetricsDashboardPanelRequest{})
 		require.Error(t, err, body)
-		assert.Equal(t, "the update sets none of title, chartType, select, layout, valueMapping and rightAxisUnits", err.Error(), body)
+		assert.Equal(t, "the update sets none of title, chartType, select, layout, valueMapping, rightAxisUnits and resourceLabels", err.Error(), body)
 	}
 }
 
