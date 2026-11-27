@@ -5,6 +5,7 @@ package requests
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -183,7 +184,8 @@ func (u *UpdateMetricsDashboardPanelRequest) UnmarshalJSON(b []byte) error {
 
 // UpdateMetricsDashboardLayoutRequest defines the Request Content for PATCH MetricsDashboard layout: the new layout of
 // each panel it names, keyed by panel id. Panels it does not name keep their layout; central-ui skips a panel id the
-// dashboard does not hold. Validate checks each layout on its own, so layouts may overlap.
+// dashboard does not hold. Validate checks each layout on its own, so layouts may overlap, in panel id order so the
+// same body always reports the same panel.
 type UpdateMetricsDashboardLayoutRequest struct {
 	dtoCommon.BaseRequest `json:",inline"`
 	Layouts               map[string]dtos.MetricsDashboardLayout `json:"layouts"`
@@ -197,8 +199,8 @@ func (u *UpdateMetricsDashboardLayoutRequest) Validate() error {
 	if len(u.Layouts) == 0 {
 		return errors.NewCommonEdgeX(errors.KindContractInvalid, "the update sets no layout", nil)
 	}
-	for id, layout := range u.Layouts {
-		if err := layout.Validate(); err != nil {
+	for _, id := range slices.Sorted(maps.Keys(u.Layouts)) {
+		if err := u.Layouts[id].Validate(); err != nil {
 			return errors.NewCommonEdgeX(errors.KindContractInvalid, fmt.Sprintf("panel %s", id), err)
 		}
 	}

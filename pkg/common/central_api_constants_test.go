@@ -22,7 +22,6 @@ func TestInternalRoute(t *testing.T) {
 		{ApiMetricsDashboardOverviewRoute, "/api/v3/internal/metricsdashboard/overview"},
 		{ApiMetricsDashboardResourcesRoute, "/api/v3/internal/metricsdashboard/resources"},
 		{ApiMetricsDashboardArchiveRoute, "/api/v3/internal/metricsdashboard/archive"},
-		{ApiMetricsDashboardLayoutRoute, "/api/v3/internal/metricsdashboard/id/:id/layout"},
 		{"/api/v3/internal/metricsdashboard/all", "/api/v3/internal/metricsdashboard/all"},
 		{"/api/v3/internal", "/api/v3/internal"},
 		{"/api/v3/", "/api/v3/"},

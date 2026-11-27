@@ -351,3 +351,12 @@ func TestUpdateMetricsDashboardLayoutRequest_Accepts(t *testing.T) {
 		"d4": {X: 0, Y: 0, W: 12, H: 2},
 	}, req.Layouts, "a zero layout and overlapping layouts are accepted")
 }
+
+func TestUpdateMetricsDashboardLayoutRequest_ReportsTheFirstPanelIdOffTheGrid(t *testing.T) {
+	body := `{"apiVersion":"v3","layouts":{"c":{"x":11,"y":0,"w":6,"h":4},"a":{"x":10,"y":0,"w":6,"h":4},"b":{"x":0,"y":0,"w":6,"h":4}}}`
+	for range 20 {
+		err := json.Unmarshal([]byte(body), &UpdateMetricsDashboardLayoutRequest{})
+		require.Error(t, err)
+		assert.Equal(t, "panel a -> layout {X:10 Y:0 W:6 H:4} is outside the 12-column grid", err.Error())
+	}
+}
